@@ -14,6 +14,22 @@ class DeterministicMatchingTests(unittest.TestCase):
         self.assertEqual(requirements["education"], "本科")
         self.assertIn("LangChain", requirements["must_have_skills"])
 
+    def test_data_engineer_jd_does_not_treat_python_as_sole_must_have(self) -> None:
+        requirements = ScreeningWorker._extract_requirements(
+            "岗位名称：数据工程师 (ETL / 数仓)\n本科及以上，3年及以上经验。\n"
+            "负责 ETL 与数仓建模，要求熟悉 SQL、Spark、Hive、Kafka、Airflow、Flink；Python 为加分项。"
+        )
+        must = requirements["must_have_skills"]
+        nice = requirements["nice_to_have_skills"]
+        self.assertIn("ETL", must)
+        self.assertIn("数仓", must)
+        self.assertIn("SQL", must)
+        self.assertNotIn("Python", must)
+        self.assertIn("Python", nice)
+        # Laundry-list stack tools stay preferred, not hard gates.
+        self.assertLessEqual(len(must), 4)
+        self.assertTrue({"Hive", "Kafka", "Airflow", "Flink"} & set(nice))
+
     def test_score_rejects_failed_hard_gate(self) -> None:
         result = ScreeningWorker._score(
             {"must_have_skills": ["Python", "LangChain"], "min_years": 3, "education": "本科"},

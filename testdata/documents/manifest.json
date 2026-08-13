@@ -1,0 +1,452 @@
+{
+  "version": "1.0",
+  "locale": "zh-CN",
+  "description": "E2E 文档解析测试集：JD 与简历 DOCX/PDF",
+  "jobs": [
+    {
+      "job_id": "JD_001",
+      "case_id": "CASE_001",
+      "title": "AI Agent / LLM 应用工程师",
+      "source": "fixture",
+      "docx": "testdata/documents/jd/JD_001_AI_Agent_LLM_应用工程师.docx",
+      "pdf": "testdata/documents/jd/JD_001_AI_Agent_LLM_应用工程师.pdf"
+    },
+    {
+      "job_id": "JD_002",
+      "case_id": "CASE_002",
+      "title": "后端开发工程师（Python / FastAPI）",
+      "source": "fixture",
+      "docx": "testdata/documents/jd/JD_002_后端开发工程师_Python_FastAPI.docx",
+      "pdf": "testdata/documents/jd/JD_002_后端开发工程师_Python_FastAPI.pdf"
+    },
+    {
+      "job_id": "JD_003",
+      "case_id": "CASE_003",
+      "title": "数据工程师（ETL / 数仓）",
+      "source": "fixture",
+      "docx": "testdata/documents/jd/JD_003_数据工程师_ETL_数仓.docx",
+      "pdf": "testdata/documents/jd/JD_003_数据工程师_ETL_数仓.pdf"
+    },
+    {
+      "job_id": "JD_004",
+      "case_id": "CASE_004",
+      "title": "前端工程师（React / TypeScript）",
+      "source": "fixture",
+      "docx": "testdata/documents/jd/JD_004_前端工程师_React_TypeScript.docx",
+      "pdf": "testdata/documents/jd/JD_004_前端工程师_React_TypeScript.pdf"
+    },
+    {
+      "job_id": "JD_005",
+      "case_id": "CASE_005",
+      "title": "全栈工程师（Node.js / React）",
+      "source": "fixture",
+      "docx": "testdata/documents/jd/JD_005_全栈工程师_Node_js_React.docx",
+      "pdf": "testdata/documents/jd/JD_005_全栈工程师_Node_js_React.pdf"
+    },
+    {
+      "job_id": "JD_006",
+      "case_id": "CASE_006",
+      "title": "NLP / RAG 工程师",
+      "source": "fixture",
+      "docx": "testdata/documents/jd/JD_006_NLP_RAG_工程师.docx",
+      "pdf": "testdata/documents/jd/JD_006_NLP_RAG_工程师.pdf"
+    },
+    {
+      "job_id": "RJD_001",
+      "case_id": "RANDOM_001",
+      "title": "AI Agent / LLM 应用工程师",
+      "source": "random",
+      "docx": "testdata/documents/jd/RJD_001_AI_Agent_LLM_应用工程师.docx",
+      "pdf": "testdata/documents/jd/RJD_001_AI_Agent_LLM_应用工程师.pdf"
+    },
+    {
+      "job_id": "RJD_002",
+      "case_id": "RANDOM_002",
+      "title": "AI Agent / LLM 应用工程师",
+      "source": "random",
+      "docx": "testdata/documents/jd/RJD_002_AI_Agent_LLM_应用工程师.docx",
+      "pdf": "testdata/documents/jd/RJD_002_AI_Agent_LLM_应用工程师.pdf"
+    }
+  ],
+  "resumes": [
+    {
+      "resume_id": "CV_003",
+      "case_id": "CASE_001",
+      "jd_id": "JD_001",
+      "label": "good",
+      "expected_decision": "recommend",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_001/CV_003_good.docx",
+      "pdf": "testdata/documents/resumes/CASE_001/CV_003_good.pdf"
+    },
+    {
+      "resume_id": "CV_004",
+      "case_id": "CASE_001",
+      "jd_id": "JD_001",
+      "label": "partial",
+      "expected_decision": "gray",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_001/CV_004_partial.docx",
+      "pdf": "testdata/documents/resumes/CASE_001/CV_004_partial.pdf"
+    },
+    {
+      "resume_id": "CV_007",
+      "case_id": "CASE_001",
+      "jd_id": "JD_001",
+      "label": "poor",
+      "expected_decision": "reject",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_001/CV_007_poor.docx",
+      "pdf": "testdata/documents/resumes/CASE_001/CV_007_poor.pdf"
+    },
+    {
+      "resume_id": "CV_013",
+      "case_id": "CASE_002",
+      "jd_id": "JD_002",
+      "label": "good",
+      "expected_decision": "recommend",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_002/CV_013_good.docx",
+      "pdf": "testdata/documents/resumes/CASE_002/CV_013_good.pdf"
+    },
+    {
+      "resume_id": "CV_015",
+      "case_id": "CASE_002",
+      "jd_id": "JD_002",
+      "label": "partial",
+      "expected_decision": "gray",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_002/CV_015_partial.docx",
+      "pdf": "testdata/documents/resumes/CASE_002/CV_015_partial.pdf"
+    },
+    {
+      "resume_id": "CV_018",
+      "case_id": "CASE_002",
+      "jd_id": "JD_002",
+      "label": "poor",
+      "expected_decision": "reject",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_002/CV_018_poor.docx",
+      "pdf": "testdata/documents/resumes/CASE_002/CV_018_poor.pdf"
+    },
+    {
+      "resume_id": "CV_021",
+      "case_id": "CASE_003",
+      "jd_id": "JD_003",
+      "label": "good",
+      "expected_decision": "recommend",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_003/CV_021_good.docx",
+      "pdf": "testdata/documents/resumes/CASE_003/CV_021_good.pdf"
+    },
+    {
+      "resume_id": "CV_024",
+      "case_id": "CASE_003",
+      "jd_id": "JD_003",
+      "label": "partial",
+      "expected_decision": "gray",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_003/CV_024_partial.docx",
+      "pdf": "testdata/documents/resumes/CASE_003/CV_024_partial.pdf"
+    },
+    {
+      "resume_id": "CV_027",
+      "case_id": "CASE_003",
+      "jd_id": "JD_003",
+      "label": "poor",
+      "expected_decision": "reject",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_003/CV_027_poor.docx",
+      "pdf": "testdata/documents/resumes/CASE_003/CV_027_poor.pdf"
+    },
+    {
+      "resume_id": "CV_033",
+      "case_id": "CASE_004",
+      "jd_id": "JD_004",
+      "label": "good",
+      "expected_decision": "recommend",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_004/CV_033_good.docx",
+      "pdf": "testdata/documents/resumes/CASE_004/CV_033_good.pdf"
+    },
+    {
+      "resume_id": "CV_036",
+      "case_id": "CASE_004",
+      "jd_id": "JD_004",
+      "label": "partial",
+      "expected_decision": "gray",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_004/CV_036_partial.docx",
+      "pdf": "testdata/documents/resumes/CASE_004/CV_036_partial.pdf"
+    },
+    {
+      "resume_id": "CV_037",
+      "case_id": "CASE_004",
+      "jd_id": "JD_004",
+      "label": "poor",
+      "expected_decision": "reject",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_004/CV_037_poor.docx",
+      "pdf": "testdata/documents/resumes/CASE_004/CV_037_poor.pdf"
+    },
+    {
+      "resume_id": "CV_043",
+      "case_id": "CASE_005",
+      "jd_id": "JD_005",
+      "label": "good",
+      "expected_decision": "recommend",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_005/CV_043_good.docx",
+      "pdf": "testdata/documents/resumes/CASE_005/CV_043_good.pdf"
+    },
+    {
+      "resume_id": "CV_045",
+      "case_id": "CASE_005",
+      "jd_id": "JD_005",
+      "label": "partial",
+      "expected_decision": "gray",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_005/CV_045_partial.docx",
+      "pdf": "testdata/documents/resumes/CASE_005/CV_045_partial.pdf"
+    },
+    {
+      "resume_id": "CV_047",
+      "case_id": "CASE_005",
+      "jd_id": "JD_005",
+      "label": "poor",
+      "expected_decision": "reject",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_005/CV_047_poor.docx",
+      "pdf": "testdata/documents/resumes/CASE_005/CV_047_poor.pdf"
+    },
+    {
+      "resume_id": "CV_051",
+      "case_id": "CASE_006",
+      "jd_id": "JD_006",
+      "label": "good",
+      "expected_decision": "recommend",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_006/CV_051_good.docx",
+      "pdf": "testdata/documents/resumes/CASE_006/CV_051_good.pdf"
+    },
+    {
+      "resume_id": "CV_054",
+      "case_id": "CASE_006",
+      "jd_id": "JD_006",
+      "label": "partial",
+      "expected_decision": "gray",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_006/CV_054_partial.docx",
+      "pdf": "testdata/documents/resumes/CASE_006/CV_054_partial.pdf"
+    },
+    {
+      "resume_id": "CV_058",
+      "case_id": "CASE_006",
+      "jd_id": "JD_006",
+      "label": "poor",
+      "expected_decision": "reject",
+      "source": "fixture",
+      "docx": "testdata/documents/resumes/CASE_006/CV_058_poor.docx",
+      "pdf": "testdata/documents/resumes/CASE_006/CV_058_poor.pdf"
+    },
+    {
+      "resume_id": "RCV_028",
+      "case_id": "RANDOM_001",
+      "jd_id": "RJD_001",
+      "label": "good",
+      "expected_decision": "recommend",
+      "source": "random",
+      "docx": "testdata/documents/resumes/RANDOM_001/RCV_028_good.docx",
+      "scenario": "good",
+      "pdf": "testdata/documents/resumes/RANDOM_001/RCV_028_good.pdf"
+    },
+    {
+      "resume_id": "RCV_029",
+      "case_id": "RANDOM_001",
+      "jd_id": "RJD_001",
+      "label": "partial",
+      "expected_decision": "gray",
+      "source": "random",
+      "docx": "testdata/documents/resumes/RANDOM_001/RCV_029_partial.docx",
+      "scenario": "partial",
+      "pdf": "testdata/documents/resumes/RANDOM_001/RCV_029_partial.pdf"
+    },
+    {
+      "resume_id": "RCV_030",
+      "case_id": "RANDOM_001",
+      "jd_id": "RJD_001",
+      "label": "poor",
+      "expected_decision": "reject",
+      "source": "random",
+      "docx": "testdata/documents/resumes/RANDOM_001/RCV_030_poor.docx",
+      "scenario": "years_fail",
+      "pdf": "testdata/documents/resumes/RANDOM_001/RCV_030_poor.pdf"
+    },
+    {
+      "resume_id": "RCV_031",
+      "case_id": "RANDOM_001",
+      "jd_id": "RJD_001",
+      "label": "poor",
+      "expected_decision": "reject",
+      "source": "random",
+      "docx": "testdata/documents/resumes/RANDOM_001/RCV_031_poor.docx",
+      "scenario": "education_fail",
+      "pdf": "testdata/documents/resumes/RANDOM_001/RCV_031_poor.pdf"
+    },
+    {
+      "resume_id": "RCV_042",
+      "case_id": "RANDOM_002",
+      "jd_id": "RJD_002",
+      "label": "good",
+      "expected_decision": "recommend",
+      "source": "random",
+      "docx": "testdata/documents/resumes/RANDOM_002/RCV_042_good.docx",
+      "scenario": "good",
+      "pdf": "testdata/documents/resumes/RANDOM_002/RCV_042_good.pdf"
+    },
+    {
+      "resume_id": "RCV_043",
+      "case_id": "RANDOM_002",
+      "jd_id": "RJD_002",
+      "label": "partial",
+      "expected_decision": "gray",
+      "source": "random",
+      "docx": "testdata/documents/resumes/RANDOM_002/RCV_043_partial.docx",
+      "scenario": "partial",
+      "pdf": "testdata/documents/resumes/RANDOM_002/RCV_043_partial.pdf"
+    },
+    {
+      "resume_id": "RCV_044",
+      "case_id": "RANDOM_002",
+      "jd_id": "RJD_002",
+      "label": "poor",
+      "expected_decision": "reject",
+      "source": "random",
+      "docx": "testdata/documents/resumes/RANDOM_002/RCV_044_poor.docx",
+      "scenario": "years_fail",
+      "pdf": "testdata/documents/resumes/RANDOM_002/RCV_044_poor.pdf"
+    },
+    {
+      "resume_id": "RCV_045",
+      "case_id": "RANDOM_002",
+      "jd_id": "RJD_002",
+      "label": "poor",
+      "expected_decision": "reject",
+      "source": "random",
+      "docx": "testdata/documents/resumes/RANDOM_002/RCV_045_poor.docx",
+      "scenario": "education_fail",
+      "pdf": "testdata/documents/resumes/RANDOM_002/RCV_045_poor.pdf"
+    }
+  ],
+  "pairs": [
+    {
+      "jd_id": "JD_001",
+      "resume_id": "CV_003"
+    },
+    {
+      "jd_id": "JD_001",
+      "resume_id": "CV_004"
+    },
+    {
+      "jd_id": "JD_001",
+      "resume_id": "CV_007"
+    },
+    {
+      "jd_id": "JD_002",
+      "resume_id": "CV_013"
+    },
+    {
+      "jd_id": "JD_002",
+      "resume_id": "CV_015"
+    },
+    {
+      "jd_id": "JD_002",
+      "resume_id": "CV_018"
+    },
+    {
+      "jd_id": "JD_003",
+      "resume_id": "CV_021"
+    },
+    {
+      "jd_id": "JD_003",
+      "resume_id": "CV_024"
+    },
+    {
+      "jd_id": "JD_003",
+      "resume_id": "CV_027"
+    },
+    {
+      "jd_id": "JD_004",
+      "resume_id": "CV_033"
+    },
+    {
+      "jd_id": "JD_004",
+      "resume_id": "CV_036"
+    },
+    {
+      "jd_id": "JD_004",
+      "resume_id": "CV_037"
+    },
+    {
+      "jd_id": "JD_005",
+      "resume_id": "CV_043"
+    },
+    {
+      "jd_id": "JD_005",
+      "resume_id": "CV_045"
+    },
+    {
+      "jd_id": "JD_005",
+      "resume_id": "CV_047"
+    },
+    {
+      "jd_id": "JD_006",
+      "resume_id": "CV_051"
+    },
+    {
+      "jd_id": "JD_006",
+      "resume_id": "CV_054"
+    },
+    {
+      "jd_id": "JD_006",
+      "resume_id": "CV_058"
+    },
+    {
+      "jd_id": "RJD_001",
+      "resume_id": "RCV_028"
+    },
+    {
+      "jd_id": "RJD_001",
+      "resume_id": "RCV_029"
+    },
+    {
+      "jd_id": "RJD_001",
+      "resume_id": "RCV_030"
+    },
+    {
+      "jd_id": "RJD_001",
+      "resume_id": "RCV_031"
+    },
+    {
+      "jd_id": "RJD_002",
+      "resume_id": "RCV_042"
+    },
+    {
+      "jd_id": "RJD_002",
+      "resume_id": "RCV_043"
+    },
+    {
+      "jd_id": "RJD_002",
+      "resume_id": "RCV_044"
+    },
+    {
+      "jd_id": "RJD_002",
+      "resume_id": "RCV_045"
+    }
+  ],
+  "stats": {
+    "jobs": 8,
+    "resumes": 26,
+    "pairs": 26
+  }
+}

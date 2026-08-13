@@ -35,7 +35,29 @@ python3 -m http.server 4173
 
 前端会在已有 Supabase 登录会话时启用真实文件上传；未配置时自动保留演示数据。
 
-## 启动 Worker
+## 本地一键启动（推荐）
+
+首次只需准备两件事：
+
+1. `supabase-config.js`（从 `supabase-config.example.js` 复制，填好 url / anonKey / workspaceId）
+2. 第一次运行 `./dev.sh` 时粘贴 Supabase 的 **service_role key**（只写入 `backend/.env`，不会进前端）
+
+之后每次开发：
+
+```bash
+./dev.sh
+```
+
+脚本会自动：
+
+- 创建/补全 `backend/.env` 与 Python 依赖
+- 生成 `supabase-config.worker.js`（前端自动连本地 Worker）
+- 同时启动：静态页面、FastAPI Worker、任务队列循环
+- 打开浏览器（默认 http://127.0.0.1:4174）
+
+按 `Ctrl+C` 停止全部服务。
+
+## 启动 Worker（手动方式）
 
 ```bash
 cd backend

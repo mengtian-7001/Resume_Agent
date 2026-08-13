@@ -2,35 +2,299 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>觅才 · 智能筛选工作台</title>
   <style>
     :root{--ink:#111111;--muted:#6e6e73;--line:#e5e5e7;--paper:#ffffff;--mint:#f5f5f7;--green:#111111;--green-2:#000000;--lime:#e8e8ed;--sand:#f5f5f7;--rose:#fff1f0;--shadow:0 8px 30px rgba(0,0,0,.05)}
     *{box-sizing:border-box} body{margin:0;background:var(--paper);color:var(--ink);font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif;font-size:14px}
     button{font:inherit;cursor:pointer;border:0} .app{min-height:100vh;display:grid;grid-template-columns:238px 1fr}.sidebar{background:#183d2d;color:#eaf5ec;padding:26px 15px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}.brand{display:flex;gap:10px;align-items:center;padding:0 10px 28px;font-size:18px;font-weight:800;letter-spacing:.2px}.brand-mark{width:30px;height:30px;border-radius:9px;background:var(--lime);color:#173e2c;display:grid;place-items:center;font-weight:900}.brand small{font-size:11px;color:#a7c3b0;margin-left:auto;font-weight:600}.nav{display:grid;gap:5px}.nav button{background:transparent;color:#bbd0c1;text-align:left;padding:11px 12px;border-radius:9px;display:flex;gap:12px;align-items:center}.nav button:hover,.nav button.active{background:#285540;color:#fff}.nav-ico{width:19px;text-align:center}.side-help{margin-top:auto;background:#26533e;border:1px solid #3a694f;border-radius:13px;padding:14px;color:#cae0d0;line-height:1.55;font-size:12px}.side-help strong{color:white;display:block;margin-bottom:4px}.side-help a{display:block;color:var(--lime);margin-top:9px;text-decoration:none;font-weight:700}
     main{min-width:0}.topbar{height:77px;padding:0 42px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:rgba(251,252,250,.88);backdrop-filter:blur(14px);position:sticky;z-index:4;top:0}.breadcrumb{color:var(--muted);font-size:13px}.breadcrumb b{color:var(--ink);font-size:15px;margin-left:9px}.account{display:flex;align-items:center;gap:12px}.avatar{width:35px;height:35px;background:#f7cfa4;color:#874a23;border-radius:50%;display:grid;place-items:center;font-weight:800}.account span{font-size:12px;color:var(--muted)}.account b{display:block;color:var(--ink);font-size:13px}.page{max-width:1320px;margin:auto;padding:35px 42px 60px}.view{display:none}.view.active{display:block}.intro{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:27px}.intro h1{font-size:28px;letter-spacing:-.8px;margin:0 0 7px}.intro p{margin:0;color:var(--muted);line-height:1.6}.primary{background:var(--green);color:white;border-radius:9px;padding:11px 16px;font-weight:700;box-shadow:0 5px 12px rgba(20,106,67,.18)}.primary:hover{background:var(--green-2)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.stat{background:white;border:1px solid var(--line);border-radius:13px;padding:19px;box-shadow:0 3px 12px rgba(26,43,33,.025)}.stat-label{color:var(--muted);font-size:12px;display:flex;justify-content:space-between}.stat-num{font-size:28px;font-weight:800;margin-top:10px;letter-spacing:-1px}.up{color:#168554;background:#ebfaf0;border-radius:5px;padding:2px 5px;font-size:11px;font-weight:700}.grid{display:grid;grid-template-columns:1.45fr 1fr;gap:19px;margin-top:19px}.card{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 3px 12px rgba(26,43,33,.025)}.card-head{padding:18px 19px 13px;display:flex;align-items:center;justify-content:space-between}.card h2{font-size:15px;margin:0}.text-link{font-size:12px;color:var(--green);font-weight:700;background:none}.pipeline{padding:5px 19px 21px;display:flex;align-items:center;justify-content:space-between}.pipe-node{text-align:center;position:relative;min-width:78px}.pipe-icon{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;margin:0 auto 7px;background:var(--mint);color:var(--green);font-size:17px}.pipe-node small{font-size:11px;color:var(--muted);white-space:nowrap}.pipe-node.done .pipe-icon{background:#dff6e6}.pipe-node.now .pipe-icon{background:var(--lime);box-shadow:0 0 0 5px #eff9d9}.pipe-line{height:1px;background:#d9e5dd;flex:1;margin:-16px 7px 0}.activity{padding:0 19px 11px}.act{display:grid;grid-template-columns:9px 1fr auto;gap:9px;padding:11px 0;border-top:1px solid #f0f2f0}.dot{width:7px;height:7px;border-radius:50%;background:var(--green);margin-top:5px}.act b{font-size:12px;display:block}.act span,.act time{font-size:11px;color:var(--muted);margin-top:3px;display:block}.candidate-list{padding:0 8px 10px}.candidate{padding:11px;display:grid;grid-template-columns:34px 1fr auto;gap:9px;align-items:center;border-radius:10px}.candidate:hover{background:#f7faf7}.initial{width:34px;height:34px;border-radius:10px;background:#e8f2ea;color:#246344;display:grid;place-items:center;font-weight:800;font-size:12px}.candidate b{font-size:13px}.candidate p{margin:3px 0 0;color:var(--muted);font-size:11px}.score{font-size:15px;font-weight:800}.badge{font-size:10px;padding:3px 6px;border-radius:999px;font-weight:700;display:inline-block;margin-top:3px}.good{color:#12683d;background:#e7f8ec}.review{color:#9a6a00;background:#fff6da}.reject{color:#a8463e;background:#ffedeb}
-    .upload-layout{display:grid;grid-template-columns:1fr 330px;gap:20px}.upload-main{display:grid;gap:16px}.drop{border:1.5px dashed #b8c9bb;background:#fff;border-radius:15px;padding:26px;min-height:172px;display:flex;gap:20px;align-items:center;transition:.2s}.drop:hover{border-color:var(--green);background:#fbfefb}.drop-icon{width:50px;height:50px;flex:0 0 50px;border-radius:13px;display:grid;place-items:center;background:#edf8ef;color:var(--green);font-size:23px}.drop h2{font-size:16px;margin:0 0 5px}.drop p{margin:0;color:var(--muted);font-size:12px;line-height:1.6}.drop-actions{margin-left:auto;text-align:right}.outline{border:1px solid #cbd8cf;border-radius:8px;padding:8px 12px;background:white;color:var(--green);font-size:12px;font-weight:700}.hint{font-size:10px;color:var(--muted);margin-top:7px}.file-list{background:#fff;border:1px solid var(--line);border-radius:13px;padding:6px 16px}.file{display:flex;align-items:center;gap:11px;padding:12px 0;border-bottom:1px solid #f0f2f0}.file:last-child{border-bottom:0}.filetype{width:27px;height:31px;border-radius:5px;background:#fff0ec;color:#d4574d;font-size:9px;font-weight:900;display:grid;place-items:center}.file-name{font-size:12px;flex:1}.file-name span{display:block;color:var(--muted);font-size:10px;margin-top:3px}.check{color:#1a8951;font-weight:800}.upload-side{background:#eff8ef;border-radius:15px;padding:21px;border:1px solid #dceee0;height:max-content}.upload-side h3{margin:0 0 9px;font-size:15px}.upload-side p{font-size:12px;line-height:1.65;margin:0;color:#54705d}.rules{margin:18px 0;padding:0;list-style:none}.rules li{font-size:12px;color:#42604b;padding:6px 0;border-bottom:1px solid #dbeadd}.rules li:before{content:"✓";color:var(--green);font-weight:800;margin-right:8px}.submit-row{display:flex;justify-content:flex-end;margin-top:4px}.process{margin-top:20px}.process .step{display:flex;gap:11px;padding:9px 0;align-items:center}.step-num{width:22px;height:22px;border-radius:50%;background:#e8f3ea;color:var(--green);display:grid;place-items:center;font-size:11px;font-weight:800}.step span{font-size:12px;color:#546159}.step b{display:block;color:var(--ink);font-size:12px;margin-bottom:2px}
+    .upload-layout{display:grid;grid-template-columns:1fr 330px;gap:20px}.upload-main{display:grid;gap:16px}.drop{border:1.5px dashed #b8c9bb;background:#fff;border-radius:15px;padding:26px;min-height:172px;display:flex;gap:20px;align-items:center;transition:.2s}.drop:hover{border-color:var(--green);background:#fbfefb}.drop-icon{width:50px;height:50px;flex:0 0 50px;border-radius:13px;display:grid;place-items:center;background:#edf8ef;color:var(--green);font-size:23px}.drop h2{font-size:16px;margin:0 0 5px}.drop p{margin:0;color:var(--muted);font-size:12px;line-height:1.6}.drop-actions{margin-left:auto;text-align:right}.outline{border:1px solid #cbd8cf;border-radius:8px;padding:8px 12px;background:white;color:var(--green);font-size:12px;font-weight:700}.hint{font-size:10px;color:var(--muted);margin-top:7px}.file-list{background:#fff;border:1px solid var(--line);border-radius:13px;padding:6px 16px}.file-empty{margin:0;padding:14px 4px;color:var(--muted);font-size:12px}.file{display:flex;align-items:center;gap:11px;padding:12px 0;border-bottom:1px solid #f0f2f0}.file:last-child{border-bottom:0}.file-pending .filetype{background:#fff8eb;color:#b45309}.filetype{width:27px;height:31px;border-radius:5px;background:#fff0ec;color:#d4574d;font-size:9px;font-weight:900;display:grid;place-items:center}.file-name{font-size:12px;flex:1}.file-name span{display:block;color:var(--muted);font-size:10px;margin-top:3px}.file-pending .file-name span{color:#b45309}.check{color:#1a8951;font-weight:800}.sample-picker{margin-top:-4px}.sample-picker-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12px;color:var(--muted)}.sample-chips{display:flex;flex-wrap:wrap;gap:8px}.sample-chip{border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:12px;background:#fff;cursor:pointer;text-align:left;line-height:1.35}.sample-chip:hover{border-color:#111}.sample-chip.active{background:#111;color:#fff;border-color:#111}.sample-chip small{display:block;font-size:10px;opacity:.72;margin-top:2px;font-weight:500}.submitted-panel{margin-top:28px;padding:20px 22px;background:#fafafa;border:1px solid var(--line);border-radius:12px}.submitted-panel[hidden]{display:none!important}.submitted-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px}.submitted-head h3{margin:0 0 4px;font-size:15px}.submitted-desc{margin:0;color:var(--muted);font-size:12px;line-height:1.55}.submitted-status{font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;background:#f0f0f0;color:#555;white-space:nowrap}.submitted-status[data-state=processing],.submitted-status[data-state=queued],.submitted-status[data-state=uploading]{background:#fff3e0;color:#b45309}.submitted-status[data-state=completed]{background:#e8f5e9;color:#1b5e20}.submitted-status[data-state=failed]{background:#ffebee;color:#c62828}.submitted-list{display:grid;gap:8px}.submitted-item{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:11px 14px;background:#fff;border:1px solid #ececec;border-radius:10px}.submitted-type{font-size:10px;font-weight:800;padding:4px 8px;border-radius:6px;background:#f5f5f7;color:#444}.submitted-name{font-size:13px;line-height:1.35}.submitted-name span{display:block;margin-top:2px;font-size:11px;color:var(--muted)}.submitted-done{font-size:10px;font-weight:700;color:#1b5e20;background:#e8f5e9;padding:4px 9px;border-radius:999px}.submitted-actions{margin-top:16px;display:flex;justify-content:flex-end}.task-list{padding:0 0 14px}.task-row{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:center;padding:14px 0;border-top:1px solid #f0f2f0;cursor:pointer}.task-row:first-child{border-top:0}.task-row:hover{background:#fafafa;margin:0 -8px;padding-left:8px;padding-right:8px;border-radius:8px}.task-row b{font-size:13px;display:block}.task-row span{font-size:11px;color:var(--muted);margin-top:3px;display:block}.task-empty{margin:0;padding:18px 0;color:var(--muted);font-size:12px}.task-meta{font-size:11px;color:var(--muted);white-space:nowrap}.task-status{font-size:10px;font-weight:700;padding:4px 9px;border-radius:999px;white-space:nowrap}.task-status[data-state=completed]{background:#e8f5e9;color:#1b5e20}.task-status[data-state=processing],.task-status[data-state=queued],.task-status[data-state=uploading]{background:#fff3e0;color:#b45309}.task-status[data-state=failed]{background:#ffebee;color:#c62828}.task-status[data-state=draft],.task-status[data-state=cancelled]{background:#f0f0f0;color:#666}.settings-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}.settings-list{margin:0;padding:0 0 18px}.settings-item{display:flex;justify-content:space-between;gap:16px;padding:13px 0;border-top:1px solid #f0f2f0;font-size:13px}.settings-item:first-child{border-top:0}.settings-item dt{color:var(--muted);margin:0}.settings-item dd{margin:0;font-weight:600;text-align:right;word-break:break-all}.settings-section{margin-top:8px}.settings-section h3{margin:0 0 14px;font-size:14px}.settings-field{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid #f0f2f0;font-size:13px}.settings-field:first-of-type{border-top:0}.settings-field label{display:flex;align-items:center;gap:10px;color:var(--ink);cursor:pointer}.settings-field input[type=checkbox]{width:16px;height:16px;accent-color:#111}.settings-field input[type=number]{width:72px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;text-align:right}.settings-field-inline{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.settings-hint{margin:12px 0 0;color:var(--muted);font-size:12px;line-height:1.6}.settings-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}.settings-span{grid-column:1 / -1}.upload-side{border-radius:15px;padding:21px;border:1px solid #dceee0;height:max-content}.upload-side h3{margin:0 0 9px;font-size:15px}.upload-side p{font-size:12px;line-height:1.65;margin:0;color:#54705d}.rules{margin:18px 0;padding:0;list-style:none}.rules li{font-size:12px;color:#42604b;padding:6px 0;border-bottom:1px solid #dbeadd}.rules li:before{content:"✓";color:var(--green);font-weight:800;margin-right:8px}.submit-row{display:flex;justify-content:flex-end;margin-top:4px}.process{margin-top:20px}.process .step{display:flex;gap:11px;padding:9px 0;align-items:center}.step-num{width:22px;height:22px;border-radius:50%;background:#e8f3ea;color:var(--green);display:grid;place-items:center;font-size:11px;font-weight:800}.step span{font-size:12px;color:#546159}.step b{display:block;color:var(--ink);font-size:12px;margin-bottom:2px}
     .result-top{background:#183d2d;color:white;border-radius:17px;padding:24px 26px;display:flex;justify-content:space-between;align-items:center}.result-top small{color:#b8d2c0}.result-top h2{margin:6px 0 0;font-size:21px}.result-summary{display:flex;gap:26px}.result-summary b{display:block;font-size:25px}.result-summary span{color:#bad3c2;font-size:11px}.result-toolbar{display:flex;justify-content:space-between;align-items:center;margin:22px 0 13px;gap:12px}.filters{display:flex;gap:7px}.filter{background:#fff;border:1px solid var(--line);padding:7px 10px;border-radius:7px;font-size:12px;color:#526158}.filter.active{background:#edf8ef;border-color:#a8d6b4;color:var(--green);font-weight:700}.search{border:1px solid var(--line);border-radius:8px;padding:8px 11px;width:185px;outline:none;font:inherit;font-size:12px}.results{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.person-card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:16px;transition:.2s}.person-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}.person-head{display:flex;gap:10px;align-items:center}.person-head h3{font-size:15px;margin:0}.person-head p{font-size:11px;color:var(--muted);margin:3px 0 0}.ring{margin-left:auto;width:43px;height:43px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--green) calc(var(--score)*1%),#e8eee9 0);position:relative;font-size:11px;font-weight:800}.ring:before{content:"";position:absolute;inset:4px;background:white;border-radius:50%}.ring span{position:relative}.tags{display:flex;gap:5px;flex-wrap:wrap;margin:15px 0 12px}.tag{font-size:10px;background:#f3f6f3;border-radius:4px;padding:4px 6px;color:#506158}.evidence{border-top:1px solid #edf0ed;padding-top:11px;color:#5b6960;font-size:11px;line-height:1.55;min-height:49px}.evidence strong{color:#30473a}.person-footer{margin-top:13px;display:flex;justify-content:space-between;align-items:center}.detail{font-size:11px;color:var(--green);font-weight:700;background:none;padding:0}
     .drawer-backdrop{position:fixed;inset:0;background:rgba(17,35,26,.34);z-index:20;opacity:0;visibility:hidden;transition:.22s}.drawer{position:fixed;z-index:21;right:0;top:0;height:100dvh;width:min(510px,100%);background:#fff;box-shadow:-16px 0 45px rgba(18,39,28,.15);transform:translateX(105%);transition:.27s ease;overflow:auto}.drawer-backdrop.open{visibility:visible;opacity:1}.drawer.open{transform:none}.drawer-header{padding:24px 25px 18px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:12px;position:sticky;top:0;background:#fff;z-index:1}.drawer-header h2{font-size:20px;margin:1px 0 3px}.drawer-header p{margin:0;color:var(--muted);font-size:12px}.drawer-close{margin-left:auto;background:#f2f5f2;border-radius:8px;width:31px;height:31px;color:#4e5d53;font-size:18px}.drawer-body{padding:21px 25px 32px}.decision{background:#eef9f0;border:1px solid #d7efd9;border-radius:12px;padding:14px 15px;display:flex;gap:12px;align-items:center}.decision strong{display:block;color:#11663d;margin-bottom:3px}.decision span{font-size:11px;color:#597064;line-height:1.45}.score-large{font-size:26px;font-weight:900;color:#11663d;letter-spacing:-1px}.section-title{font-size:13px;font-weight:800;margin:24px 0 11px}.gates{display:grid;gap:8px}.gate{border:1px solid var(--line);border-radius:9px;padding:10px 11px;display:flex;justify-content:space-between;align-items:center;font-size:12px}.gate span{color:var(--muted)}.gate b{font-size:11px;color:#177247;background:#eaf8ed;padding:3px 6px;border-radius:999px}.breakdown{display:grid;gap:10px}.bar-row{display:grid;grid-template-columns:85px 1fr 28px;gap:9px;align-items:center;font-size:11px}.bar-row span{color:#536259}.bar{height:7px;border-radius:99px;background:#edf1ed;overflow:hidden}.bar i{display:block;height:100%;border-radius:inherit;background:#228057}.bar-row b{text-align:right}.quote{font-size:12px;line-height:1.65;padding:12px 13px;background:#f8faf8;border-left:3px solid var(--lime);color:#45564b;margin:8px 0}.interview-note{background:#fff8df;border:1px solid #f8e9af;border-radius:11px;padding:13px;font-size:12px;line-height:1.55;color:#6c5821}.drawer-actions{display:flex;gap:9px;margin-top:22px}.drawer-actions .outline{flex:1}.drawer-actions .primary{flex:1}.toast{position:fixed;z-index:30;left:50%;bottom:25px;transform:translate(-50%,120px);background:#183d2d;color:white;padding:11px 15px;border-radius:9px;font-size:12px;box-shadow:var(--shadow);transition:.25s}.toast.show{transform:translate(-50%,0)}
     /* 橙色企业中后台视觉层：强调效率、层级和状态，而非复制任何品牌界面。 */
     .sidebar{background:#1d2735;color:#edf1f7}.brand-mark{background:var(--green);color:#fff;border-radius:7px}.brand small{color:#8f9caf}.nav button{color:#aab5c5}.nav button:hover,.nav button.active{background:#344154}.side-help{background:#283647;border-color:#3a4a5e;color:#c4cfdd}.side-help a{color:#ff9c52}.result-top,.toast{background:linear-gradient(110deg,#1d2735,#303d50)}.up{color:#d85800;background:#fff1e8}.initial{background:#fff0e6;color:#d95700}.pipe-node.done .pipe-icon{background:#fff0e6}.pipe-node.now .pipe-icon{background:#ffe0c2;box-shadow:0 0 0 5px #fff3e8}.filter.active{background:#fff1e8;border-color:#ffc595;color:#d95700}.upload-side{background:#fff8f2;border-color:#ffdfc7}.drop:hover{border-color:var(--green);background:#fffaf7}.decision{background:#fff5ed;border-color:#ffdac0}.decision strong,.score-large{color:#d95700}.gate b{color:#d95700;background:#fff0e6}.bar i{background:linear-gradient(90deg,#ff8b34,#ff6a00)}.quote{border-left-color:#ff8b34;background:#fffaf7}.drawer-backdrop{background:rgba(17,24,39,.42)}.drawer-close{background:#f2f4f7}.check{color:#ff6a00}
     /* 极简消费科技产品风格：中性色、较大留白、黑色作为唯一行动强调。 */
     body{letter-spacing:-.01em}.sidebar{background:#fff;color:#111;border-right:1px solid var(--line);padding:27px 15px}.brand{font-size:17px}.brand-mark{background:#111;color:#fff;border-radius:50%;width:28px;height:28px}.brand small{color:#a1a1a6}.nav{gap:2px}.nav button{color:#6e6e73;border-radius:8px;font-size:13px}.nav button:hover,.nav button.active{background:#f5f5f7;color:#111}.side-help{background:#f5f5f7;border:0;border-radius:10px;color:#6e6e73}.side-help strong{color:#111}.side-help a{color:#111}.topbar{background:rgba(255,255,255,.82);border-bottom:1px solid #eee}.account{background:transparent;text-align:left}.account i{display:block;font-style:normal;color:var(--muted);font-size:12px}.page{max-width:1250px;padding-top:53px}.intro{margin-bottom:40px}.intro h1{font-size:38px;letter-spacing:-1.8px}.intro p{font-size:14px}.primary{background:#111;border-radius:999px;box-shadow:none;padding:12px 19px}.outline{border-color:#d2d2d7;border-radius:999px;color:#111;padding:9px 14px}.stats{gap:10px}.stat{border:0;border-radius:0;box-shadow:none;padding:0 20px 0 0}.stat:not(:last-child){border-right:1px solid var(--line)}.stat-num{font-size:32px}.up{color:#6e6e73;background:#f5f5f7}.grid{gap:34px;margin-top:38px}.card{border:0;border-radius:0;box-shadow:none;border-top:1px solid var(--line)}.card-head{padding:17px 0 13px}.pipeline,.activity{padding-left:0;padding-right:0}.candidate-list{padding-left:0}.candidate{padding-left:0;border-radius:0}.candidate:hover{background:transparent}.initial{border-radius:50%;background:#f5f5f7;color:#111}.pipe-icon{border-radius:50%;background:#f5f5f7;color:#111}.pipe-node.done .pipe-icon,.pipe-node.now .pipe-icon{background:#111;color:white;box-shadow:none}.result-top{background:#111;border-radius:0;padding:32px}.results{gap:11px}.person-card{border-color:#e5e5e7;border-radius:12px;box-shadow:none}.person-card:hover{box-shadow:0 10px 25px rgba(0,0,0,.07);transform:translateY(-1px)}.ring{background:conic-gradient(#111 calc(var(--score)*1%),#e8e8ed 0)}.filter{border-radius:999px;padding:8px 13px}.filter.active{background:#111;border-color:#111;color:#fff}.upload-side{background:#f5f5f7;border:0;border-radius:0}.drop{border-color:#d2d2d7;border-radius:12px}.drop:hover{border-color:#111;background:#fff}.drop-icon{background:#f5f5f7;color:#111;border-radius:50%}.decision{background:#f5f5f7;border:0;border-radius:12px}.decision strong,.score-large{color:#111}.gate b{background:#f5f5f7;color:#111}.bar i{background:#111}.quote{background:#fafafa;border-left-color:#111}.interview-note{background:#f5f5f7;border:0;color:#333}.drawer{box-shadow:-16px 0 50px rgba(0,0,0,.12)}.toast{background:#111}
-    @media(max-width:1000px){.app{grid-template-columns:72px 1fr}.sidebar{padding:23px 10px}.brand{padding:0 0 28px;justify-content:center}.brand span,.brand small,.nav button span:not(.nav-ico),.side-help{display:none}.nav button{justify-content:center;padding:12px}.topbar,.page{padding-left:25px;padding-right:25px}.stats{grid-template-columns:repeat(2,1fr)}.grid,.upload-layout{grid-template-columns:1fr}.results{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:620px){body{font-size:13px}.app{display:block}.sidebar{position:fixed;z-index:8;bottom:0;top:auto;width:100%;height:65px;padding:8px;background:#183d2d;display:block}.brand,.side-help{display:none}.nav{display:flex;justify-content:space-around;gap:0}.nav button{padding:8px 10px;display:grid;gap:2px;text-align:center;font-size:9px;color:#bbd0c1}.nav button span:not(.nav-ico){display:block}.nav-ico{font-size:16px}.topbar{height:59px;padding:0 17px}.account span{display:none}.account b{display:none}.page{padding:24px 17px 90px}.intro{align-items:flex-start;gap:14px}.intro h1{font-size:23px}.intro p{font-size:12px}.primary{white-space:nowrap;padding:10px 12px;font-size:12px}.stats{gap:9px}.stat{padding:14px}.stat-num{font-size:23px}.grid{margin-top:12px;gap:12px}.pipeline{overflow:auto;justify-content:flex-start;gap:0}.pipe-node{min-width:75px}.pipe-line{min-width:20px}.drop{padding:18px;display:grid;grid-template-columns:50px 1fr}.drop-actions{margin:0;text-align:left;grid-column:2}.file-list{padding:5px 12px}.upload-side{padding:18px}.result-top{padding:18px;align-items:flex-start}.result-summary{gap:12px}.result-summary b{font-size:21px}.result-toolbar{align-items:flex-start;flex-direction:column}.filters{overflow:auto;max-width:100%}.search{width:100%}.results{grid-template-columns:1fr}.breadcrumb b{display:block;margin:2px 0 0}.account{gap:6px}.drawer{top:auto;bottom:0;height:min(84dvh,720px);width:100%;border-radius:18px 18px 0 0;transform:translateY(105%)}.drawer.open{transform:none}.drawer-header{padding:18px}.drawer-body{padding:18px 18px 28px}.drawer:before{content:"";display:block;width:36px;height:4px;border-radius:9px;background:#dbe2dc;margin:8px auto -3px}.drawer-header h2{font-size:18px}.bar-row{grid-template-columns:78px 1fr 26px}}
+    @media(max-width:1000px){.app{grid-template-columns:72px 1fr}.sidebar{padding:23px 10px}.brand{padding:0 0 28px;justify-content:center}.brand span,.brand small,.nav-label,.side-help{display:none}.nav button{justify-content:center;padding:12px}.topbar,.page{padding-left:25px;padding-right:25px}.stats{grid-template-columns:repeat(2,1fr)}.grid,.upload-layout,.settings-grid{grid-template-columns:1fr}.results{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:620px){body{font-size:13px}.app{display:block}.sidebar{position:fixed;z-index:8;bottom:0;top:auto;width:100%;height:65px;padding:8px;background:#183d2d;display:block}.brand,.side-help{display:none}.nav{display:flex;justify-content:space-around;gap:0}.nav button{padding:8px 10px;display:grid;gap:2px;text-align:center;font-size:9px;color:#bbd0c1}.nav-label{display:block}.nav-ico{font-size:16px}.topbar{height:59px;padding:0 17px}.account span{display:none}.account b{display:none}.page{padding:24px 17px 90px}.intro{align-items:flex-start;gap:14px}.intro h1{font-size:23px}.intro p{font-size:12px}.primary{white-space:nowrap;padding:10px 12px;font-size:12px}.stats{gap:9px}.stat{padding:14px}.stat-num{font-size:23px}.grid{margin-top:12px;gap:12px}.pipeline{overflow:auto;justify-content:flex-start;gap:0}.pipe-node{min-width:75px}.pipe-line{min-width:20px}.drop{padding:18px;display:grid;grid-template-columns:50px 1fr}.drop-actions{margin:0;text-align:left;grid-column:2}.file-list{padding:5px 12px}.upload-side{padding:18px}.result-top{padding:18px;align-items:flex-start}.result-summary{gap:12px}.result-summary b{font-size:21px}.result-toolbar{align-items:flex-start;flex-direction:column}.filters{overflow:auto;max-width:100%}.search{width:100%}.results{grid-template-columns:1fr}.breadcrumb b{display:block;margin:2px 0 0}.account{gap:6px}.drawer{top:auto;bottom:0;height:min(84dvh,720px);width:100%;border-radius:18px 18px 0 0;transform:translateY(105%)}.drawer.open{transform:none}.drawer-header{padding:18px}.drawer-body{padding:18px 18px 28px}.drawer:before{content:"";display:block;width:36px;height:4px;border-radius:9px;background:#dbe2dc;margin:8px auto -3px}.drawer-header h2{font-size:18px}.bar-row{grid-template-columns:78px 1fr 26px}}
     @media(max-width:620px){.sidebar{background:#fff;border-top:1px solid var(--line)}.nav button{color:#6e6e73}.nav button:hover,.nav button.active{background:transparent;color:#111}.intro h1{font-size:30px;letter-spacing:-1.3px}.page{padding-top:32px}.stats{gap:0}.stat{padding:13px 10px;border-right:1px solid var(--line)!important}.stat:nth-child(even){border-right:0!important}.grid{margin-top:27px;gap:28px}.result-top{padding:23px;background:#111}.drawer{border-radius:18px 18px 0 0}}
+  </style>
+  <style>
+    #upload.upload-busy .drop,
+    #upload.upload-busy .sample-picker,
+    #upload.upload-busy .file-list,
+    #upload.upload-busy .submit-row{display:none}
+    #upload.upload-busy .upload-side{opacity:.55}
+    .submitted-panel{
+      margin-top:8px;padding:0;background:transparent;border:0;border-radius:0;
+    }
+    .submitted-panel[hidden]{display:none!important}
+    .submitted-hero{
+      padding:28px 0 22px;border-top:1px solid var(--line);
+    }
+    .submitted-head{
+      display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:22px;
+    }
+    .submitted-head h3{margin:0 0 6px;font-size:22px;letter-spacing:-.6px;font-weight:700}
+    .submitted-desc{margin:0;color:var(--muted);font-size:13px;line-height:1.55;max-width:42em}
+    .submitted-status{
+      font-size:11px;font-weight:700;padding:6px 12px;border-radius:999px;
+      background:#f5f5f7;color:#6e6e73;white-space:nowrap;letter-spacing:.2px;
+    }
+    .submitted-status[data-state=processing],
+    .submitted-status[data-state=queued],
+    .submitted-status[data-state=uploading]{background:#111;color:#fff}
+    .submitted-status[data-state=completed]{background:#f5f5f7;color:#111}
+    .submitted-status[data-state=failed]{background:#ffebee;color:#c62828}
+    .submitted-list{
+      display:flex;flex-wrap:wrap;gap:8px;margin-bottom:26px;
+    }
+    .submitted-item{
+      display:inline-flex;align-items:center;gap:8px;padding:8px 12px;
+      background:#f5f5f7;border:0;border-radius:999px;
+    }
+    .submitted-type{
+      font-size:10px;font-weight:800;padding:0;background:transparent;color:#6e6e73;
+    }
+    .submitted-name{font-size:12px;line-height:1.2;color:#111;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .submitted-name span{display:none}
+    .submitted-done{font-size:10px;font-weight:700;color:#6e6e73;background:transparent;padding:0}
+    .parse-meter{margin:0 0 28px;padding:0;border:0;background:transparent}
+    .parse-meter-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:12px}
+    .parse-meter-head b{font-size:13px;font-weight:600;color:#6e6e73}
+    .parse-meter-head span{font-size:40px;font-weight:700;letter-spacing:-1.8px;line-height:1;font-variant-numeric:tabular-nums;color:#111}
+    .parse-meter-bar{height:4px;border-radius:999px;background:#ececef;overflow:hidden}
+    .parse-meter-fill{
+      display:block;height:100%;width:0%;border-radius:inherit;
+      background:linear-gradient(90deg,#3a3a3c,#111);
+      transition:width .55s cubic-bezier(.22,1,.36,1);
+    }
+    .parse-meter-label{margin:10px 0 0;font-size:13px;color:var(--muted)}
+    .parse-track{
+      margin:4px 0 0;display:grid;gap:0;position:relative;
+      padding:4px 0 0;border-top:1px solid #eceef0;
+    }
+    .parse-step{
+      display:grid;grid-template-columns:18px 1fr auto;gap:14px;align-items:start;
+      padding:16px 0;border:0;border-bottom:1px solid #f0f0f2;border-radius:0;background:transparent;
+      transition:opacity .2s;
+    }
+    .parse-step:last-child{border-bottom:0}
+    .parse-step.wait{opacity:.45}
+    .parse-step b{display:block;font-size:14px;font-weight:600;letter-spacing:-.2px}
+    .parse-step span{display:block;margin-top:3px;color:var(--muted);font-size:12px;line-height:1.45}
+    .parse-dot{
+      width:10px;height:10px;margin-top:5px;border-radius:50%;
+      display:block;background:#d2d2d7;color:transparent;font-size:0;
+      box-shadow:0 0 0 4px #fff;
+    }
+    .parse-step.now .parse-dot{background:#111;box-shadow:0 0 0 4px #fff,0 0 0 7px rgba(17,17,17,.12)}
+    .parse-step.done .parse-dot{background:#111}
+    .parse-state{font-size:11px;font-weight:600;color:#a1a1a6;padding-top:3px}
+    .parse-step.now .parse-state{color:#111}
+    .parse-step.done .parse-state{color:#6e6e73}
+    .agent-chain{margin:8px 0 18px;padding:0;border:0}
+    .agent-chain-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px}
+    .agent-chain-head b{font-size:13px;font-weight:600;color:#111}
+    .agent-chain-head span{font-size:11px;color:#8a8f8c}
+    .agent-chain-list{
+      display:grid;gap:0;max-height:min(320px,42vh);overflow-y:auto;overflow-x:hidden;
+      padding:8px 12px;border:1px solid #eceef0;border-radius:12px;background:#fafbfa;
+      scrollbar-gutter:stable;scroll-behavior:smooth;
+    }
+    .agent-chain-list::-webkit-scrollbar{width:8px}
+    .agent-chain-list::-webkit-scrollbar-thumb{background:#d0d4d1;border-radius:999px}
+    .agent-chain-list::-webkit-scrollbar-track{background:transparent}
+    .agent-chain-item{display:grid;grid-template-columns:10px 1fr auto;gap:10px;align-items:start;padding:9px 0;border-bottom:1px solid #f1f2f3}
+    .agent-chain-item:last-child{border-bottom:0}
+    .agent-chain-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;background:#d0d4d1}
+    .agent-chain-item.running .agent-chain-dot{background:#111;box-shadow:0 0 0 4px rgba(17,17,17,.1)}
+    .agent-chain-item.completed .agent-chain-dot{background:#177247}
+    .agent-chain-item.failed .agent-chain-dot{background:#b42318}
+    .agent-chain-item.skipped .agent-chain-dot{background:#b0b6b2}
+    .agent-chain-item strong{display:block;font-size:13px;font-weight:600;letter-spacing:-.2px}
+    .agent-chain-item p{margin:3px 0 0;font-size:11px;color:#7a827c;line-height:1.45;word-break:break-word}
+    .agent-chain-meta{font-size:11px;color:#8a8f8c;text-align:right;white-space:nowrap;line-height:1.4}
+    .agent-chain-empty{margin:0;padding:6px 0;font-size:12px;color:#8a8f8c}
+    .submitted-actions{margin-top:22px;display:flex;justify-content:flex-start;gap:10px}
+    .submitted-actions .outline,
+    .submitted-actions .primary{min-width:160px;justify-content:center}
+    .question-item{background:#f5f5f7;border-radius:10px;padding:12px 13px;margin:0 0 8px;font-size:12px;line-height:1.55;color:#333}
+    .question-item small{display:block;margin-bottom:4px;color:var(--muted);font-weight:700}
+    .person-footer .qcount{font-size:11px;color:var(--muted);font-weight:600}
+    .parse-track-wrap{margin:4px 0 0;border-top:1px solid #eceef0;padding-top:4px}
+    .parse-track-summary{
+      list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;
+      gap:12px;padding:12px 0;font-size:13px;font-weight:600;color:#111;user-select:none;
+    }
+    .parse-track-summary::-webkit-details-marker{display:none}
+    .parse-track-summary::after{content:"▾";color:#a1a1a6;font-size:12px;transition:transform .2s}
+    details.parse-track-wrap:not([open]) .parse-track-summary::after{transform:rotate(-90deg)}
+    .parse-track-summary em{font-style:normal;font-weight:500;font-size:12px;color:#8a8f8c}
+    .parse-track-wrap .parse-track{border-top:0;margin:0;padding:0}
+    @media (min-width: 721px) {
+      .parse-track-summary{display:none}
+      .parse-track-wrap{border-top:1px solid #eceef0;padding-top:4px}
+    }
+    @media(max-width:620px){
+      .submitted-head{flex-direction:column;align-items:flex-start}
+      .parse-meter-head span{font-size:32px}
+      .submitted-name{max-width:160px}
+    }
+
+    /* —— 手机端体验层：触控优先、底部导航、粘性操作 —— */
+    @media (max-width: 720px) {
+      html{scroll-behavior:smooth}
+      body{
+        padding-bottom:calc(72px + env(safe-area-inset-bottom, 0px));
+        -webkit-tap-highlight-color:transparent;
+        overscroll-behavior-y:contain;
+      }
+      .app{display:block}
+      .sidebar{
+        position:fixed;left:0;right:0;bottom:0;top:auto;z-index:40;
+        width:100%;height:auto;min-height:0;
+        padding:6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+        background:rgba(255,255,255,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+        border-top:1px solid #e8e8ed;border-right:0;box-shadow:0 -8px 28px rgba(0,0,0,.06);
+      }
+      .brand,.side-help{display:none!important}
+      .nav{
+        display:grid;grid-template-columns:repeat(5,1fr);gap:2px;align-items:stretch;
+      }
+      .nav button{
+        min-height:52px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+        gap:3px;border-radius:12px;font-size:10px;font-weight:600;letter-spacing:0;color:#8a8f98;
+      }
+      .nav button.active{background:#f5f5f7;color:#111}
+      .nav-ico{font-size:18px;line-height:1}
+      .nav-label{display:block!important;font-size:10px;line-height:1.1}
+      .topbar{
+        height:auto;min-height:52px;padding:10px 16px;
+        padding-top:calc(10px + env(safe-area-inset-top, 0px));
+      }
+      .breadcrumb{font-size:12px}
+      .breadcrumb b{display:inline;margin-left:6px;font-size:14px}
+      .account span{display:none}
+      .page{
+        padding:20px 16px calc(28px + env(safe-area-inset-bottom, 0px));
+        padding-top:20px;
+      }
+      .intro{
+        flex-direction:column;align-items:stretch;gap:14px;margin-bottom:22px;
+      }
+      .intro h1{font-size:28px;letter-spacing:-1.2px;line-height:1.15}
+      .intro p{font-size:13px}
+      .intro .primary,
+      .intro .outline{width:100%;min-height:46px;justify-content:center;text-align:center}
+      .stats{grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+      .stat{padding:14px 14px 16px;border-right:0!important;border-bottom:1px solid var(--line)}
+      .stat:nth-child(odd){border-right:1px solid var(--line)!important}
+      .stat:nth-last-child(-n+2){border-bottom:0}
+      .stat-num{font-size:26px}
+      .grid,.upload-layout,.settings-grid{grid-template-columns:1fr;gap:18px}
+      .upload-side{order:3;padding:16px;border-radius:14px}
+      #upload.upload-busy .upload-side{display:none}
+      .drop{
+        display:grid;grid-template-columns:44px 1fr;gap:12px;padding:16px;min-height:0;align-items:start;
+      }
+      .drop-icon{width:44px;height:44px;flex:none}
+      .drop-actions{grid-column:1 / -1;margin:0;text-align:left;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+      .drop-actions .outline,.drop-actions .primary{min-height:40px}
+      .sample-chips{gap:8px}
+      .sample-chip{min-height:40px;padding:10px 14px;max-width:100%}
+      .submit-row{
+        position:sticky;bottom:calc(68px + env(safe-area-inset-bottom, 0px));z-index:12;
+        margin:8px 0 0;padding:12px 0 4px;
+        background:linear-gradient(180deg,rgba(255,255,255,0),#fff 28%);
+        display:flex;justify-content:stretch;
+      }
+      .submit-row .primary{width:100%;min-height:50px;font-size:15px;border-radius:14px}
+      .submitted-hero{padding:18px 0 12px}
+      .submitted-head h3{font-size:20px}
+      .submitted-list{margin-bottom:18px;gap:6px}
+      .submitted-item{max-width:100%}
+      .parse-meter{margin-bottom:18px}
+      .parse-meter-head span{font-size:36px}
+      .agent-chain{margin:0 0 12px}
+      .agent-chain-list{
+        max-height:min(240px,38vh);padding:8px 10px;border-radius:14px;
+        -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+      }
+      .agent-chain-item{grid-template-columns:10px 1fr;gap:8px}
+      .agent-chain-meta{grid-column:2;text-align:left;white-space:normal}
+      .parse-track-wrap{margin-top:8px}
+      .parse-track-summary{min-height:44px;padding:10px 0}
+      .parse-step{padding:12px 0;gap:10px}
+      .parse-step span{display:none}
+      .submitted-actions{
+        position:sticky;bottom:calc(68px + env(safe-area-inset-bottom, 0px));z-index:12;
+        margin-top:14px;padding:12px 0 6px;flex-direction:column;align-items:stretch;
+        background:linear-gradient(180deg,rgba(255,255,255,0),#fff 30%);
+      }
+      .submitted-actions .primary,
+      .submitted-actions .outline{width:100%;min-width:0;min-height:48px;border-radius:14px}
+      .result-top{
+        flex-direction:column;align-items:flex-start;gap:16px;padding:20px 18px;border-radius:16px;
+      }
+      .result-top h2{font-size:18px;line-height:1.35}
+      .result-summary{width:100%;justify-content:space-between;gap:8px}
+      .result-toolbar{flex-direction:column;align-items:stretch;gap:10px;margin:16px 0 12px}
+      .filters{
+        display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+        padding-bottom:2px;scrollbar-width:none;
+      }
+      .filters::-webkit-scrollbar{display:none}
+      .filter{flex:0 0 auto;min-height:40px;padding:8px 14px;white-space:nowrap}
+      .search{width:100%;min-height:44px;font-size:16px;border-radius:12px}
+      .results{grid-template-columns:1fr;gap:12px}
+      .person-card{padding:14px;border-radius:14px}
+      .person-footer{gap:10px;flex-wrap:wrap}
+      .person-footer .detail{min-height:40px;padding:8px 0}
+      .task-row{
+        grid-template-columns:1fr;gap:8px;padding:14px 0;align-items:start;
+      }
+      .task-meta{white-space:normal}
+      .settings-field,.settings-item{flex-direction:column;align-items:flex-start;gap:8px}
+      .settings-item dd{text-align:left}
+      .settings-actions{flex-direction:column;align-items:stretch}
+      .settings-actions .primary,.settings-actions .outline{width:100%;min-height:46px}
+      .drawer{
+        top:auto;bottom:0;left:0;right:0;width:100%;
+        height:min(88dvh,780px);max-height:88dvh;
+        border-radius:20px 20px 0 0;transform:translateY(105%);
+        padding-bottom:env(safe-area-inset-bottom, 0px);
+      }
+      .drawer.open{transform:none}
+      .drawer:before{
+        content:"";display:block;width:40px;height:4px;border-radius:99px;
+        background:#d8d8de;margin:10px auto 0;
+      }
+      .drawer-actions{flex-direction:column}
+      .drawer-actions .primary,.drawer-actions .outline{min-height:46px}
+      .toast{
+        left:16px;right:16px;bottom:calc(78px + env(safe-area-inset-bottom, 0px));
+        transform:translateY(120px);width:auto;text-align:center;
+      }
+      .toast.show{transform:translateY(0)}
+      .pipeline{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <aside class="sidebar">
       <div class="brand"><span class="brand-mark">M</span><span>觅才</span><small>Beta</small></div>
-      <nav class="nav">
-        <button class="active" data-view="dashboard"><span class="nav-ico">⌂</span><span>工作台</span></button>
-        <button data-view="upload"><span class="nav-ico">⇧</span><span>发起筛选</span></button>
-        <button data-view="results"><span class="nav-ico">▦</span><span>候选人</span></button>
-        <button><span class="nav-ico">◷</span><span>任务记录</span></button>
-        <button><span class="nav-ico">⚙</span><span>设置</span></button>
+      <nav class="nav" aria-label="主导航">
+        <button class="active" data-view="dashboard"><span class="nav-ico" aria-hidden="true">⌂</span><span class="nav-label">工作台</span></button>
+        <button data-view="upload"><span class="nav-ico" aria-hidden="true">⇧</span><span class="nav-label">筛选</span></button>
+        <button data-view="results"><span class="nav-ico" aria-hidden="true">▦</span><span class="nav-label">候选人</span></button>
+        <button data-view="tasks"><span class="nav-ico" aria-hidden="true">◷</span><span class="nav-label">任务</span></button>
+        <button data-view="settings"><span class="nav-ico" aria-hidden="true">⚙</span><span class="nav-label">设置</span></button>
       </nav>
       <div class="side-help"><strong>需要帮助？</strong>了解筛选逻辑、评分依据与数据安全说明。<a href="#">查看使用指南 →</a></div>
     </aside>
@@ -49,7 +313,7 @@
             <article class="stat"><div class="stat-label">平均匹配度</div><div class="stat-num">76<span style="font-size:15px">%</span></div></article>
           </div>
           <div class="grid">
-            <article class="card"><div class="card-head"><h2>正在进行的筛选</h2><button class="text-link" data-go="results">查看全部</button></div><div class="pipeline"><div class="pipe-node done"><div class="pipe-icon">✓</div><small>文件解析</small></div><div class="pipe-line"></div><div class="pipe-node done"><div class="pipe-icon">✓</div><small>结构化抽取</small></div><div class="pipe-line"></div><div class="pipe-node now"><div class="pipe-icon">◌</div><small>智能匹配</small></div><div class="pipe-line"></div><div class="pipe-node"><div class="pipe-icon">◷</div><small>生成报告</small></div></div><div style="padding:0 19px;color:#597065;font-size:12px">AI Agent / LLM 应用工程师 <span style="float:right;color:#168554;font-weight:700">已处理 8 / 12 份</span></div></article>
+            <article class="card"><div class="card-head"><h2>正在进行的筛选</h2><button class="text-link" data-go="results">查看全部</button></div><div class="pipeline" id="live-pipeline"><div class="pipe-node" data-pipe="parse"><div class="pipe-icon">1</div><small>文件解析</small></div><div class="pipe-line"></div><div class="pipe-node" data-pipe="extract"><div class="pipe-icon">2</div><small>结构化抽取</small></div><div class="pipe-line"></div><div class="pipe-node" data-pipe="match"><div class="pipe-icon">3</div><small>智能匹配</small></div><div class="pipe-line"></div><div class="pipe-node" data-pipe="questions"><div class="pipe-icon">4</div><small>生成面试题</small></div></div><div id="live-pipeline-meta" style="padding:0 19px;color:#597065;font-size:12px">提交 JD 和简历后，这里会显示实时进度。<span style="float:right;font-weight:700">等待开始</span></div></article>
             <article class="card"><div class="card-head"><h2>最近动态</h2></div><div class="activity"><div class="act"><i class="dot"></i><div><b>AI Agent 岗位已完成 JD 解析</b><span>提取 5 项必备技能与 2 条硬门槛</span></div><time>10 分钟前</time></div><div class="act"><i class="dot" style="background:#e4a821"></i><div><b>4 位候选人进入人工复核</b><span>匹配度介于 60–74 分</span></div><time>35 分钟前</time></div><div class="act"><i class="dot" style="background:#82918a"></i><div><b>后端工程师筛选报告已生成</b><span>共分析 18 份简历</span></div><time>昨天</time></div></div></article>
           </div>
           <div class="grid">
@@ -58,15 +322,65 @@
           </div>
         </section>
         <section class="view" id="upload">
-          <div class="intro"><div><h1>发起一次智能筛选</h1><p>JD 是评估标准，简历是被评估对象。一次提交后，将分别解析并自动匹配。</p></div></div>
+            <div class="intro"><div><h1>发起一次智能筛选</h1><p>选好 JD 和简历，点「一键解析」——上传、解析、匹配全自动完成。</p></div></div>
           <div class="upload-layout"><div class="upload-main">
             <div class="drop"><div class="drop-icon">▤</div><div><h2>上传岗位描述（JD）</h2><p>请上传 1 份岗位说明书，我们将提取职责、必备技能、年限与学历等筛选标准。</p></div><div class="drop-actions"><button class="outline" onclick="demoAdd('jd')">选择文件</button><div class="hint">PDF、DOCX · 最大 10MB</div></div></div>
-            <div class="file-list" id="jd-file"><div class="file"><div class="filetype">PDF</div><div class="file-name">AI Agent / LLM 应用工程师.pdf<span>1.8 MB · 已完成格式校验</span></div><div class="check">✓</div></div></div>
+            <div class="sample-picker" data-type="jd"><div class="sample-picker-head"><span>或从样例中选择</span><button type="button" class="text-link sample-shuffle" data-type="jd">换一批</button></div><div class="sample-chips" id="jd-sample-chips"></div></div>
+            <div class="file-list" id="jd-file"><p class="file-empty">尚未选择 JD 文件</p></div>
             <div class="drop"><div class="drop-icon">▥</div><div><h2>上传候选人简历</h2><p>可一次选择多份简历。每份文件会单独解析并基于同一个 JD 打分。</p></div><div class="drop-actions"><button class="outline" onclick="demoAdd('resume')">添加简历</button><div class="hint">PDF、DOCX · 最多 20 份</div></div></div>
-            <div class="file-list" id="resume-files"><div class="file"><div class="filetype">PDF</div><div class="file-name">林知远 · 简历.pdf<span>680 KB · 已完成格式校验</span></div><div class="check">✓</div></div><div class="file"><div class="filetype">PDF</div><div class="file-name">韩沐辰 · 简历.pdf<span>742 KB · 已完成格式校验</span></div><div class="check">✓</div></div><div class="file"><div class="filetype">PDF</div><div class="file-name">陈思齐 · 简历.pdf<span>512 KB · 已完成格式校验</span></div><div class="check">✓</div></div></div>
+            <div class="sample-picker" data-type="resume"><div class="sample-picker-head"><span>或从样例中选择</span><button type="button" class="text-link sample-shuffle" data-type="resume">换一批</button></div><div class="sample-chips" id="resume-sample-chips"></div></div>
+            <div class="file-list" id="resume-files"><p class="file-empty">尚未选择简历</p></div>
             <input id="jd-input" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
             <input id="resume-input" type="file" multiple accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
-            <div class="submit-row"><button class="primary" id="start-screening">开始解析与筛选 →</button></div>
+            <div class="submit-row" id="submit-row">
+              <button class="primary" id="start-screening">一键解析 →</button>
+            </div>
+            <section class="submitted-panel" id="submitted-panel" hidden>
+              <div class="submitted-hero">
+                <div class="submitted-head">
+                  <div>
+                    <h3 id="submitted-title">本次已提交</h3>
+                    <p class="submitted-desc" id="submitted-desc">文件已上传，正在排队解析。</p>
+                  </div>
+                  <span class="submitted-status" id="submitted-status">处理中</span>
+                </div>
+                <div class="submitted-list" id="submitted-list"></div>
+                <div class="parse-meter" id="parse-meter">
+                  <div class="parse-meter-head">
+                    <b id="parse-meter-title">准备开始</b>
+                    <span id="parse-meter-percent">0%</span>
+                  </div>
+                  <div class="parse-meter-bar" aria-hidden="true"><i class="parse-meter-fill" id="parse-meter-fill"></i></div>
+                  <p class="parse-meter-label" id="parse-meter-label">上传完成后开始解析</p>
+                </div>
+                <div class="agent-chain" id="agent-chain">
+                  <div class="agent-chain-head">
+                    <b>Agent 链</b>
+                    <span id="agent-chain-mode">等待步骤事件…</span>
+                  </div>
+                  <div class="agent-chain-list" id="agent-chain-list">
+                    <p class="agent-chain-empty">一键解析后，这里会实时显示 Construction / Checker 等步骤。</p>
+                  </div>
+                </div>
+                <details class="parse-track-wrap" id="parse-track-wrap" open>
+                  <summary class="parse-track-summary">
+                    <span>五步进度</span>
+                    <em id="parse-track-summary-text">准备中</em>
+                  </summary>
+                  <div class="parse-track" id="parse-track">
+                    <div class="parse-step" data-step="upload"><div class="parse-dot"></div><div><b>上传与校验</b><span>检查文件格式、大小和类型</span></div><em class="parse-state">等待</em></div>
+                    <div class="parse-step" data-step="parse_jd"><div class="parse-dot"></div><div><b>解析岗位 JD</b><span>抽取职责、技能、年限与学历</span></div><em class="parse-state">等待</em></div>
+                    <div class="parse-step" data-step="parse_resume"><div class="parse-dot"></div><div><b>解析候选人简历</b><span>抽取经历、技能与项目证据</span></div><em class="parse-state">等待</em></div>
+                    <div class="parse-step" data-step="match"><div class="parse-dot"></div><div><b>智能匹配打分</b><span>硬门槛、技能覆盖与综合评分</span></div><em class="parse-state">等待</em></div>
+                    <div class="parse-step" data-step="questions"><div class="parse-dot"></div><div><b>生成面试题</b><span>推荐候选人生成完整试题与追问</span></div><em class="parse-state">等待</em></div>
+                  </div>
+                </details>
+                <div class="submitted-actions" id="submitted-actions">
+                  <button class="primary" id="view-results-btn" data-go="results">查看筛选结果 →</button>
+                  <button class="outline" type="button" id="new-screening-btn">再发起一次</button>
+                </div>
+              </div>
+            </section>
           </div>
           <aside class="upload-side"><h3>提交前请确认</h3><p>文件上传后会先经过确定性校验，只有合法且可读取的文档才会进入智能处理流程。</p><ul class="rules"><li>JD 数量恰好为 1 份</li><li>至少选择 1 份简历</li><li>支持 PDF / DOCX 格式</li><li>单个文件不超过 10MB</li><li>文件须包含可解析文本</li></ul><div class="process"><div class="step"><div class="step-num">1</div><span><b>校验与分类</b>格式、大小、文档类型</span></div><div class="step"><div class="step-num">2</div><span><b>并行解析</b>JD 与各份简历独立处理</span></div><div class="step"><div class="step-num">3</div><span><b>匹配与排序</b>硬门槛、评分、证据摘要</span></div></div></aside></div>
         </section>
@@ -81,6 +395,34 @@
             <article class="person-card" data-kind="review" data-name="陈思齐"><div class="person-head"><div class="initial">陈</div><div><h3>陈思齐</h3><p>NLP 应用工程师 · 3 年</p></div><div class="ring" style="--score:68"><span>68</span></div></div><div class="tags"><span class="tag">RAG</span><span class="tag">LangChain</span><span class="tag">Prompt</span></div><div class="evidence"><strong>风险点：</strong>主要是问答场景；复杂工具编排与多 Agent 仅有预研记录。</div><div class="person-footer"><span class="badge review">建议复核</span><button class="detail">查看分析 →</button></div></article>
             <article class="person-card" data-kind="review" data-name="吴晓岚"><div class="person-head"><div class="initial">吴</div><div><h3>吴晓岚</h3><p>算法工程师 · 4 年</p></div><div class="ring" style="--score:64"><span>64</span></div></div><div class="tags"><span class="tag">PyTorch</span><span class="tag">LangChain</span><span class="tag">SFT</span></div><div class="evidence"><strong>风险点：</strong>模型训练背景较强，Agent 编排与线上服务化证据不足。</div><div class="person-footer"><span class="badge review">建议复核</span><button class="detail">查看分析 →</button></div></article>
             <article class="person-card" data-kind="reject" data-name="孙博文"><div class="person-head"><div class="initial">孙</div><div><h3>孙博文</h3><p>AI 应用初级工程师 · 1 年</p></div><div class="ring" style="--score:32"><span>32</span></div></div><div class="tags"><span class="tag">Python</span><span class="tag">LangChain</span></div><div class="evidence"><strong>未通过硬门槛：</strong>相关工作年限约 1 年，低于岗位要求的 3 年。</div><div class="person-footer"><span class="badge reject">不匹配</span><button class="detail">查看分析 →</button></div></article>
+          </div>
+        </section>
+        <section class="view" id="tasks">
+          <div class="intro"><div><h1>任务记录</h1><p>查看历史筛选任务及处理进度。</p></div><button class="primary" data-go="upload">＋ 发起新筛选</button></div>
+          <article class="card"><div class="card-head"><h2>全部任务</h2></div><div class="task-list" id="task-list"><p class="task-empty">加载中…</p></div></article>
+        </section>
+        <section class="view" id="settings">
+          <div class="intro"><div><h1>设置</h1><p>工作区与会话配置信息。</p></div></div>
+          <div class="settings-grid">
+            <article class="card"><div class="card-head"><h2>工作区</h2></div><dl class="settings-list" id="settings-workspace"><div class="settings-item"><dt>工作区 ID</dt><dd id="settings-workspace-id">—</dd></div><div class="settings-item"><dt>数据连接</dt><dd id="settings-connection">—</dd></div></dl></article>
+            <article class="card"><div class="card-head"><h2>会话</h2></div><dl class="settings-list" id="settings-session"><div class="settings-item"><dt>登录方式</dt><dd id="settings-auth-mode">—</dd></div><div class="settings-item"><dt>用户 ID</dt><dd id="settings-user-id">—</dd></div><div class="settings-item"><dt>会话状态</dt><dd id="settings-session-state">—</dd></div></dl></article>
+            <article class="card settings-span">
+              <div class="card-head"><h2>筛选规则</h2><span class="settings-hint" id="screening-config-status"></span></div>
+              <div class="settings-section">
+                <h3>硬门槛</h3>
+                <div class="settings-field"><label for="gate-min-years"><input type="checkbox" id="gate-min-years" checked />启用最低工作年限校验</label></div>
+                <div class="settings-field"><label for="gate-education"><input type="checkbox" id="gate-education" checked />启用最低学历校验</label></div>
+                <div class="settings-field"><label for="gate-skills"><input type="checkbox" id="gate-skills" checked />启用必备技能覆盖校验</label></div>
+                <div class="settings-field settings-field-inline"><span>必备技能最低覆盖率</span><div><input type="number" id="gate-skill-coverage" min="0" max="100" step="5" value="50" /> %</div></div>
+              </div>
+              <div class="settings-section">
+                <h3>匹配度分档</h3>
+                <div class="settings-field settings-field-inline"><span>推荐面试</span><div>≥ <input type="number" id="threshold-recommend" min="0" max="100" value="75" /> 分</div></div>
+                <div class="settings-field settings-field-inline"><span>人工复核</span><div>≥ <input type="number" id="threshold-review" min="0" max="100" value="60" /> 分</div></div>
+                <p class="settings-hint">须先通过硬门槛。总分低于「人工复核」线时将标记为不匹配；介于两线之间进入复核区。</p>
+              </div>
+              <div class="settings-actions"><button class="outline" type="button" id="reset-screening-config">恢复默认</button><button class="primary" type="button" id="save-screening-config">保存规则</button></div>
+            </article>
           </div>
         </section>
       </div>
@@ -101,31 +443,59 @@
       <div class="breakdown" id="drawer-breakdown"></div>
       <h3 class="section-title">关键证据</h3>
       <div id="drawer-quotes"></div>
-      <h3 class="section-title">建议面试追问</h3>
+      <h3 class="section-title">面试题</h3>
+      <div id="drawer-questions"></div>
+      <h3 class="section-title">建议追问</h3>
       <div class="interview-note" id="drawer-question"></div>
       <div class="drawer-actions"><button class="outline" id="save-candidate">收藏候选人</button><button class="primary" id="invite-candidate">发起面试</button></div>
     </div>
   </aside>
   <div class="toast" id="toast" role="status"></div>
   <script>
-    const labels={dashboard:'工作台',upload:'发起筛选',results:'候选人'};
-    function show(view){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===view));document.querySelectorAll('.nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));document.getElementById('crumb').textContent=labels[view];window.scrollTo({top:0,behavior:'smooth'})}
+    const labels={dashboard:'工作台',upload:'发起筛选',results:'候选人',tasks:'任务记录',settings:'设置'};
+    function show(view){
+      document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===view));
+      document.querySelectorAll('.nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+      document.getElementById('crumb').textContent=labels[view]||view;
+      window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+      document.body.dataset.view=view;
+      document.dispatchEvent(new CustomEvent('viewchange',{detail:{view}}));
+    }
+    window.showView=show;
     document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));
     document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.go)));
     document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');filterCards()}));
     document.getElementById('search').addEventListener('input',filterCards);
-    function filterCards(){const kind=document.querySelector('.filter.active').dataset.filter;const query=document.getElementById('search').value.trim();document.querySelectorAll('.person-card').forEach(c=>c.style.display=((kind==='all'||c.dataset.kind===kind)&&c.dataset.name.includes(query))?'block':'none')}
-    function demoAdd(type){const box=document.getElementById(type==='jd'?'jd-file':'resume-files');const row=document.createElement('div');row.className='file';row.innerHTML=`<div class="filetype">PDF</div><div class="file-name">${type==='jd'?'产品运营经理 · 岗位描述.pdf':'新候选人 · 简历.pdf'}<span>模拟文件 · 已完成格式校验</span></div><div class="check">✓</div>`;if(type==='jd')box.innerHTML='';box.append(row)}
+    function filterCards(){const active=document.querySelector('.filter.active');if(!active)return;const kind=active.dataset.filter;const query=document.getElementById('search').value.trim();document.querySelectorAll('.person-card').forEach(c=>c.style.display=((kind==='all'||c.dataset.kind===kind)&&(c.dataset.name||'').includes(query))?'block':'none')}
+    function demoAdd(type){const box=document.getElementById(type==='jd'?'jd-file':'resume-files');const row=document.createElement('div');row.className='file file-pending';row.innerHTML=`<div class="filetype">PDF</div><div class="file-name">${type==='jd'?'产品运营经理 · 岗位描述.pdf':'新候选人 · 简历.pdf'}<span>模拟文件 · 待提交</span></div>`;if(type==='jd')box.innerHTML='';box.append(row)}
     window.profiles={
-      '林知远':{role:'Agent 平台工程师 · 5 年经验',score:92,decision:'建议优先面试',summary:'匹配度高，关键技能与生产落地证据完整。',gates:[['工作年限','5 年 ≥ 3 年','通过'],['学历要求','本科 ≥ 本科','通过'],['必备技能','5 / 5 已覆盖','通过']],scores:[['硬条件',100],['技能匹配',96],['项目相关度',92],['生产实践',88]],quotes:['“主导设计了工单处理 Multi-Agent：拆解、指派、工具调用与人工接管。”','“将工具误调用率从 11% 降至 3.2%。”'],question:'请详细讲解一次工具调用发生失败时，你如何设计幂等、重试与人工接管的边界？'},
-      '韩沐辰':{role:'高级 LLM 应用工程师 · 6 年经验',score:89,decision:'建议优先面试',summary:'有双 Agent 线上实践，技术深度与岗位需求高度吻合。',gates:[['工作年限','6 年 ≥ 3 年','通过'],['学历要求','本科 ≥ 本科','通过'],['必备技能','5 / 5 已覆盖','通过']],scores:[['硬条件',100],['技能匹配',94],['项目相关度',91],['生产实践',84]],quotes:['“代码 Agent 与浏览器 Agent 双通道，生产环境日活约 3000。”','“失败任务自动降级为人工。”'],question:'浏览器 Agent 在生产中会遇到哪些不稳定因素？你会怎样做可观测性与失败兜底？'},
-      '周启明':{role:'智能体研发工程师 · 4 年经验',score:84,decision:'建议优先面试',summary:'同义技能映射后匹配良好，客服 Agent 有可验证业务成果。',gates:[['工作年限','4 年 ≥ 3 年','通过'],['学历要求','硕士 ≥ 本科','通过'],['必备技能','5 / 5 语义覆盖','通过']],scores:[['硬条件',100],['技能匹配',87],['项目相关度',86],['生产实践',76]],quotes:['“把业务接口封装成工具调用，含签名校验与失败补偿。”','“人工接管率下降 18%。”'],question:'当关键技能只以同义词出现时，你会如何证明自己实际掌握了对应的技术体系？'},
-      '陈思齐':{role:'NLP 应用工程师 · 3 年经验',score:68,decision:'建议人工复核',summary:'基础硬门槛通过，但复杂 Agent 的生产实践偏弱。',gates:[['工作年限','3 年 ≥ 3 年','通过'],['学历要求','本科 ≥ 本科','通过'],['必备技能','5 / 5 关键词覆盖','通过']],scores:[['硬条件',100],['技能匹配',82],['项目相关度',61],['生产实践',43]],quotes:['“Function Calling 仅对接过两个只读接口。”','“Multi-Agent 停留在技术预研，未上线。”'],question:'请设计一个能写入业务系统的 Agent：如何控制权限、回滚与风险确认？'},
-      '吴晓岚':{role:'算法工程师 · 4 年经验',score:64,decision:'建议人工复核',summary:'技能字段满足，但实际经历偏模型训练，应用编排证据有限。',gates:[['工作年限','4 年 ≥ 3 年','通过'],['学历要求','本科 ≥ 本科','通过'],['必备技能','5 / 5 关键词覆盖','通过']],scores:[['硬条件',100],['技能匹配',77],['项目相关度',58],['生产实践',39]],quotes:['“Function Calling 与 Multi-Agent 均为本地实验，无生产流量。”','“应用侧无 SLA。”'],question:'从模型训练转向 Agent 应用时，怎样评估一次工具调用链是否能安全上线？'},
-      '孙博文':{role:'AI 应用初级工程师 · 1 年经验',score:32,decision:'当前不建议推进',summary:'不满足岗位要求的最小相关工作年限。',gates:[['工作年限','1 年 ＜ 3 年','未通过'],['学历要求','本科 ≥ 本科','通过'],['必备技能','5 / 5 关键词覆盖','通过']],scores:[['硬条件',35],['技能匹配',55],['项目相关度',31],['生产实践',20]],quotes:['“工作经历约 1 年，不满足 3 年硬门槛。”','“未独立上线。”'],question:'若岗位存在初级岗机会，可进一步了解其独立完成项目的边界。'}
+      '林知远':{role:'Agent 平台工程师 · 5 年经验',score:92,decision:'建议优先面试',summary:'匹配度高，关键技能与生产落地证据完整。',gates:[['工作年限','5 年 ≥ 3 年','通过'],['学历要求','本科 ≥ 本科','通过'],['必备技能','5 / 5 已覆盖','通过']],scores:[['硬条件',100],['技能匹配',96],['项目相关度',92],['生产实践',88]],quotes:['“主导设计了工单处理 Multi-Agent：拆解、指派、工具调用与人工接管。”','“将工具误调用率从 11% 降至 3.2%。”'],questions:[{id:'Q01',knowledge_point:'Multi-Agent',question:'请详细讲解一次工具调用发生失败时，你如何设计幂等、重试与人工接管的边界？'},{id:'Q02',knowledge_point:'LangChain',question:'请设计一个可观测的 Agent 工具调用链路，并说明如何做评测。'}],followups:[{question:'如果线上工具误调用率突然升高，你的排查顺序是什么？'}],question:'请详细讲解一次工具调用发生失败时，你如何设计幂等、重试与人工接管的边界？'},
+      '韩沐辰':{role:'高级 LLM 应用工程师 · 6 年经验',score:89,decision:'建议优先面试',summary:'有双 Agent 线上实践，技术深度与岗位需求高度吻合。',gates:[['工作年限','6 年 ≥ 3 年','通过'],['学历要求','本科 ≥ 本科','通过'],['必备技能','5 / 5 已覆盖','通过']],scores:[['硬条件',100],['技能匹配',94],['项目相关度',91],['生产实践',84]],quotes:['“代码 Agent 与浏览器 Agent 双通道，生产环境日活约 3000。”','“失败任务自动降级为人工。”'],questions:[{id:'Q01',knowledge_point:'浏览器 Agent',question:'浏览器 Agent 在生产中会遇到哪些不稳定因素？你会怎样做可观测性与失败兜底？'},{id:'Q02',knowledge_point:'Multi-Agent',question:'代码 Agent 与浏览器 Agent 如何分工，失败时如何降级？'}],followups:[{question:'日活升高后，你如何控制工具调用成本与延迟？'}],question:'浏览器 Agent 在生产中会遇到哪些不稳定因素？你会怎样做可观测性与失败兜底？'},
+      '周启明':{role:'智能体研发工程师 · 4 年经验',score:84,decision:'建议优先面试',summary:'同义技能映射后匹配良好，客服 Agent 有可验证业务成果。',gates:[['工作年限','4 年 ≥ 3 年','通过'],['学历要求','硕士 ≥ 本科','通过'],['必备技能','5 / 5 语义覆盖','通过']],scores:[['硬条件',100],['技能匹配',87],['项目相关度',86],['生产实践',76]],quotes:['“把业务接口封装成工具调用，含签名校验与失败补偿。”','“人工接管率下降 18%。”'],questions:[{id:'Q01',knowledge_point:'技能映射',question:'当关键技能只以同义词出现时，你会如何证明自己实际掌握了对应的技术体系？'},{id:'Q02',knowledge_point:'工具调用',question:'请说明一次业务接口封装成工具时的签名校验与失败补偿设计。'}],followups:[{question:'人工接管率下降 18% 的统计口径是什么？'}],question:'当关键技能只以同义词出现时，你会如何证明自己实际掌握了对应的技术体系？'},
+      '陈思齐':{role:'NLP 应用工程师 · 3 年经验',score:68,decision:'建议人工复核',summary:'基础硬门槛通过，但复杂 Agent 的生产实践偏弱。',gates:[['工作年限','3 年 ≥ 3 年','通过'],['学历要求','本科 ≥ 本科','通过'],['必备技能','5 / 5 关键词覆盖','通过']],scores:[['硬条件',100],['技能匹配',82],['项目相关度',61],['生产实践',43]],quotes:['“Function Calling 仅对接过两个只读接口。”','“Multi-Agent 停留在技术预研，未上线。”'],questions:[{id:'Q01',knowledge_point:'Function Calling',question:'请设计一个能写入业务系统的 Agent：如何控制权限、回滚与风险确认？'},{id:'Q02',knowledge_point:'Multi-Agent',question:'从预研到上线，你认为还缺哪些可验证里程碑？'}],followups:[{question:'只读接口之外，写接口的审批与审计你会怎么做？'}],question:'请设计一个能写入业务系统的 Agent：如何控制权限、回滚与风险确认？'},
+      '吴晓岚':{role:'算法工程师 · 4 年经验',score:64,decision:'建议人工复核',summary:'技能字段满足，但实际经历偏模型训练，应用编排证据有限。',gates:[['工作年限','4 年 ≥ 3 年','通过'],['学历要求','本科 ≥ 本科','通过'],['必备技能','5 / 5 关键词覆盖','通过']],scores:[['硬条件',100],['技能匹配',77],['项目相关度',58],['生产实践',39]],quotes:['“Function Calling 与 Multi-Agent 均为本地实验，无生产流量。”','“应用侧无 SLA。”'],questions:[{id:'Q01',knowledge_point:'上线评估',question:'从模型训练转向 Agent 应用时，怎样评估一次工具调用链是否能安全上线？'},{id:'Q02',knowledge_point:'可观测性',question:'本地实验如何补齐生产级日志、追踪与失败样本？'}],followups:[{question:'若没有生产流量，你用什么替代指标证明稳定性？'}],question:'从模型训练转向 Agent 应用时，怎样评估一次工具调用链是否能安全上线？'},
+      '孙博文':{role:'AI 应用初级工程师 · 1 年经验',score:32,decision:'当前不建议推进',summary:'不满足岗位要求的最小相关工作年限。',gates:[['工作年限','1 年 ＜ 3 年','未通过'],['学历要求','本科 ≥ 本科','通过'],['必备技能','5 / 5 关键词覆盖','通过']],scores:[['硬条件',35],['技能匹配',55],['项目相关度',31],['生产实践',20]],quotes:['“工作经历约 1 年，不满足 3 年硬门槛。”','“未独立上线。”'],questions:[{id:'Q01',knowledge_point:'项目边界',question:'若岗位存在初级岗机会，可进一步了解其独立完成项目的边界。'},{id:'Q02',knowledge_point:'成长路径',question:'你计划在 6 个月内补齐哪些可验证的 Agent 工程能力？'}],followups:[{question:'请举一个你独立负责到交付的最小项目。'}],question:'若岗位存在初级岗机会，可进一步了解其独立完成项目的边界。'}
     };
     const drawer=document.getElementById('candidate-drawer'),backdrop=document.getElementById('drawer-backdrop'),toast=document.getElementById('toast');
-    function openDrawer(name){const p=profiles[name];if(!p)return;document.getElementById('drawer-initial').textContent=name[0];document.getElementById('drawer-name').textContent=name;document.getElementById('drawer-role').textContent=p.role;document.getElementById('drawer-score').textContent=p.score;document.getElementById('drawer-decision').textContent=p.decision;document.getElementById('drawer-summary').textContent=p.summary;document.getElementById('drawer-gates').innerHTML=p.gates.map(g=>`<div class="gate"><span>${g[0]} · ${g[1]}</span><b style="${g[2]==='未通过'?'color:#a8463e;background:#ffedeb':''}">${g[2]}</b></div>`).join('');document.getElementById('drawer-breakdown').innerHTML=p.scores.map(s=>`<div class="bar-row"><span>${s[0]}</span><div class="bar"><i style="width:${s[1]}%"></i></div><b>${s[1]}</b></div>`).join('');document.getElementById('drawer-quotes').innerHTML=p.quotes.map(q=>`<div class="quote">${q}</div>`).join('');document.getElementById('drawer-question').textContent=p.question;drawer.classList.add('open');backdrop.classList.add('open');drawer.setAttribute('aria-hidden','false')}
+    window.openDrawer=openDrawer;
+    function openDrawer(name){
+      const p=profiles[name];if(!p)return;
+      document.getElementById('drawer-initial').textContent=name[0];
+      document.getElementById('drawer-name').textContent=name;
+      document.getElementById('drawer-role').textContent=p.role;
+      document.getElementById('drawer-score').textContent=p.score;
+      document.getElementById('drawer-decision').textContent=p.decision;
+      document.getElementById('drawer-summary').textContent=p.summary;
+      document.getElementById('drawer-gates').innerHTML=p.gates.map(g=>`<div class="gate"><span>${g[0]} · ${g[1]}</span><b style="${g[2]==='未通过'?'color:#a8463e;background:#ffedeb':''}">${g[2]}</b></div>`).join('');
+      document.getElementById('drawer-breakdown').innerHTML=p.scores.map(s=>`<div class="bar-row"><span>${s[0]}</span><div class="bar"><i style="width:${s[1]}%"></i></div><b>${s[1]}</b></div>`).join('');
+      document.getElementById('drawer-quotes').innerHTML=p.quotes.map(q=>`<div class="quote">${q}</div>`).join('');
+      const exam=p.questions&&p.questions.length?p.questions:(p.question?[p.question]:[]);
+      const examNode=document.getElementById('drawer-questions');
+      examNode.innerHTML=exam.length?exam.map((q,i)=>`<div class="question-item"><small>Q${String(i+1).padStart(2,'0')}${q.knowledge_point?' · '+q.knowledge_point:''}</small>${q.question||q}</div>`).join(''):'<div class="question-item">暂无面试题</div>';
+      const follow=p.followups&&p.followups.length?p.followups.map(item=>item.question||item).join('\n'):(p.question||'');
+      document.getElementById('drawer-question').textContent=follow||'暂无追问';
+      drawer.classList.add('open');backdrop.classList.add('open');drawer.setAttribute('aria-hidden','false');
+    }
     function closeDrawer(){drawer.classList.remove('open');backdrop.classList.remove('open');drawer.setAttribute('aria-hidden','true')}
     document.querySelectorAll('.detail').forEach(button=>button.addEventListener('click',()=>openDrawer(button.closest('.person-card').dataset.name)));
     document.getElementById('drawer-close').addEventListener('click',closeDrawer);backdrop.addEventListener('click',closeDrawer);document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
@@ -134,6 +504,7 @@
     document.getElementById('invite-candidate').addEventListener('click',()=>notify('已创建面试邀请草稿（前端演示）'));
   </script>
   <script src="supabase-config.js"></script>
+  <script src="supabase-config.worker.js" onerror="console.info('提示：运行 ./dev.sh 可自动生成 Worker 配置并一键启动完整本地环境。')"></script>
   <script type="module" src="frontend.js"></script>
 </body>
 </html>

@@ -1,0 +1,83 @@
+{
+  "jd": [
+    {
+      "id": "jd-ai-agent-llm",
+      "title": "AI Agent / LLM 应用工程师",
+      "filename": "AI Agent / LLM 应用工程师.docx",
+      "path": "samples/jd-ai-agent-llm.docx",
+      "tag": "Agent"
+    },
+    {
+      "id": "jd-python-fastapi",
+      "title": "后端开发工程师（Python / FastAPI）",
+      "filename": "后端开发工程师（Python / FastAPI）.docx",
+      "path": "samples/jd-python-fastapi.docx",
+      "tag": "后端"
+    },
+    {
+      "id": "jd-etl",
+      "title": "数据工程师（ETL / 数仓）",
+      "filename": "数据工程师（ETL / 数仓）.docx",
+      "path": "samples/jd-etl.docx",
+      "tag": "数据"
+    }
+  ],
+  "resumes": [
+    {
+      "id": "resume-cv_001",
+      "title": "林知远",
+      "filename": "林知远 · 简历.docx",
+      "path": "samples/resume-cv_001.docx",
+      "tag": "推荐"
+    },
+    {
+      "id": "resume-cv_002",
+      "title": "周启明",
+      "filename": "周启明 · 简历.docx",
+      "path": "samples/resume-cv_002.docx",
+      "tag": "推荐"
+    },
+    {
+      "id": "resume-cv_003",
+      "title": "韩沐辰",
+      "filename": "韩沐辰 · 简历.docx",
+      "path": "samples/resume-cv_003.docx",
+      "tag": "推荐"
+    },
+    {
+      "id": "resume-cv_004",
+      "title": "陈思齐",
+      "filename": "陈思齐 · 简历.docx",
+      "path": "samples/resume-cv_004.docx",
+      "tag": "复核"
+    },
+    {
+      "id": "resume-cv_005",
+      "title": "吴晓岚",
+      "filename": "吴晓岚 · 简历.docx",
+      "path": "samples/resume-cv_005.docx",
+      "tag": "复核"
+    },
+    {
+      "id": "resume-cv_006",
+      "title": "赵予安",
+      "filename": "赵予安 · 简历.docx",
+      "path": "samples/resume-cv_006.docx",
+      "tag": "复核"
+    },
+    {
+      "id": "resume-cv_007",
+      "title": "孙博文",
+      "filename": "孙博文 · 简历.docx",
+      "path": "samples/resume-cv_007.docx",
+      "tag": "不匹配"
+    },
+    {
+      "id": "resume-cv_008",
+      "title": "郑小禾",
+      "filename": "郑小禾 · 简历.docx",
+      "path": "samples/resume-cv_008.docx",
+      "tag": "不匹配"
+    }
+  ]
+}

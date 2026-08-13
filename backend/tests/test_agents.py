@@ -23,11 +23,26 @@ class MockAgentWorkflowTests(unittest.TestCase):
                 "years_experience": 4,
                 "education": "本科",
                 "skills": ["Python", "LangGraph", "FastAPI", "MCP"],
+                "raw_text": (
+                    "负责生产环境 Multi-Agent 编排与 FastAPI 服务化。"
+                    "日均调用 12000 次，工具误调用率从 9% 降至 2.8%，"
+                    "并完成 tracing 与压测。"
+                ),
+                "experiences": [
+                    {
+                        "company": "示例科技",
+                        "title": "Agent 工程师",
+                        "years": 3,
+                        "bullets": ["生产级 Multi-Agent", "FastAPI 网关 QPS 提升 40%"],
+                    }
+                ],
+                "projects": [{"name": "内部 Copilot", "bullets": ["日活 3000+", "灰度上线"]}],
             },
         )
 
         self.assertEqual(output.match_result["decision"], "recommend")
         self.assertGreaterEqual(len(output.questions), 10)
+        self.assertEqual(len({q["question"] for q in output.questions}), len(output.questions))
         self.assertGreaterEqual(len(output.followups), 3)
         self.assertTrue(all(question["scoring_rubric"] for question in output.questions))
         self.assertEqual(self.checker.review(output)["status"], "pass")
@@ -45,8 +60,63 @@ class MockAgentWorkflowTests(unittest.TestCase):
 
         self.assertEqual(output.match_result["decision"], "reject")
         self.assertFalse(output.match_result["hard_gate_pass"])
-        self.assertEqual(output.questions, [])
+        self.assertLess(len(output.questions), 10)
+        self.assertEqual(len({q["question"] for q in output.questions}), len(output.questions))
         self.assertGreaterEqual(len(output.followups), 1)
+
+    def test_missing_one_skill_goes_to_review_not_hard_reject(self) -> None:
+        output = self.agent.analyze(
+            self.requirements,
+            {
+                "name": "接近匹配候选人",
+                "years_experience": 4,
+                "education": "硕士",
+                "skills": ["Python", "LangGraph"],  # missing FastAPI
+            },
+        )
+
+        self.assertTrue(output.match_result["hard_gate_pass"])
+        self.assertEqual(output.match_result["decision"], "review")
+        self.assertGreaterEqual(len(output.questions), 5)
+        self.assertTrue(any("FastAPI" in (q["question"] + q["knowledge_point"]) for q in output.questions))
+
+    def test_custom_thresholds_can_promote_review_candidate(self) -> None:
+        output = self.agent.analyze(
+            self.requirements,
+            {
+                "name": "边界候选人",
+                "years_experience": 4,
+                "education": "本科",
+                "skills": ["Python", "LangGraph", "FastAPI"],
+            },
+            screening_config={
+                "score_thresholds": {"recommend_min": 90, "review_min": 50},
+            },
+        )
+
+        self.assertEqual(output.match_result["decision"], "review")
+
+    def test_disabled_year_gate_allows_younger_candidate_if_score_is_high(self) -> None:
+        output = self.agent.analyze(
+            self.requirements,
+            {
+                "name": "初级高分候选人",
+                "years_experience": 1,
+                "education": "本科",
+                "skills": ["Python", "LangGraph", "FastAPI"],
+            },
+            screening_config={
+                "hard_gates": {
+                    "min_years": {"enabled": False},
+                    "education": {"enabled": True},
+                    "must_have_skills": {"enabled": True, "min_coverage": 1.0},
+                },
+                "score_thresholds": {"recommend_min": 75, "review_min": 60},
+            },
+        )
+
+        self.assertTrue(output.match_result["hard_gate_pass"])
+        self.assertIn(output.match_result["decision"], {"recommend", "review"})
 
 
 if __name__ == "__main__":
