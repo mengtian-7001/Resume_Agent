@@ -1,0 +1,1617 @@
+#!/usr/bin/env python3
+"""Generate matching-eval batch 2: CASE_004..CASE_006."""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+
+EXTRAS = {
+    "CV_032": (
+        "补充：配置台权限按角色切菜单，Hooks 自定义封装表格筛选。"
+        "TS 工具类型抽过 DeepPartial。打包器缓存组按路由拆包。无障碍只做了焦点顺序，未做完整审计。"
+    ),
+    "CV_033": (
+        "补充：组件库文档站用 React 编写，TypeScript 禁止 any。"
+        "CSS token 与设计稿对齐；Webpack 构建矩阵含新旧浏览器双产物。"
+        "状态管理示例可切换 Redux/Context。带 3 名前端做 Code Review。"
+    ),
+    "CV_034": (
+        "补充：CRUD 页能交差但不能做复杂交互。CSS 没有暗色。"
+        "Webpack 报错通常直接重装依赖。Redux 示例未合入主干。适合灰区，不宜直接推荐。"
+    ),
+    "CV_035": (
+        "补充：Vue 项目仍占绩效 80%。React 两页无单测、无设计系统接入。"
+        "TypeScript 从 Vue 的 JS 迁移，any 较多。Webpack loader 说不清是转岗最大风险。"
+    ),
+    "CV_036": (
+        "补充：动效与视觉还原是强项，工程化是弱项。"
+        "React 活动页按设计稿切图。TypeScript 编译常被 ignore。"
+        "Webpack 只改 publicPath。无跨页状态。硕士年限刚满，灰区样本。"
+        "视觉强工程弱，状态管理名不副实，不宜直接推荐面试。"
+    ),
+    "CV_037": (
+        "补充：转正材料夸大「独立负责列表页」，实际改表头文案。"
+        "CSS 未处理兼容。Webpack 失败不会看日志。Redux 教程未做完。"
+        "年限硬门槛失败：约 1 年，即使关键字齐全也应 reject。"
+        "校园社团官网无类型约束、无构建治理，不能折算工作年限。"
+    ),
+    "CV_038": (
+        "补充：审批流 Redux 有完整时间旅行调试。Webpack bundle 分析做过三次。"
+        "带初级讲过 Hooks 闭包陷阱。人事档案学历为大专，专升本未取得。"
+        "技能达标，教育硬门槛失败，应 reject。"
+        "大专学历是唯一硬拒绝点，用于回归教育门槛拦截。"
+    ),
+    "CV_039": (
+        "补充：述职仍是容量、容灾与 gRPC 治理。前端页面由外包交付。"
+        "明确拒绝转前端。跨领域 senior：后端架构师不能当作 React 候选人，缺全部必备技能。"
+        "资历很高，方向完全不对，应 reject。"
+    ),
+    "CV_040": (
+        "补充：技能表按 JD 顺序自动生成。日期三处互相矛盾。"
+        "复制岗位地点广州/上海混用。无仓库无事故。关键词堆砌反作弊，结构化好看原文不可信。"
+        "精通 CSS 与不会写 CSS 并列，LLM 必须低分拒绝。"
+    ),
+    "CV_042": (
+        "补充：InnoDB 行锁问题出在库存预扣，后来改成乐观版本号。"
+        "React 视图层无设计系统，但表单校验完整。REST 幂等键存 Redis。别名样本不应因字面否决。"
+    ),
+    "CV_043": (
+        "补充：四个 REST 边界按商户/订单/结算/权限拆分。"
+        "MySQL 日切对账。React 第三次改版引入 TypeScript 严格模式。"
+        "Docker 多阶段构建，GraphQL 只读试点未进写路径。规模最大的 good 样本。"
+    ),
+    "CV_044": (
+        "补充：React 能独立排期。Express BFF 把后端字段改名转发给前端。"
+        "MySQL 账号只读。REST 错误码照抄下游。前端强后端弱的灰区全栈。"
+        "不能独立设计写路径与迁移，离 JD 全栈要求有缺口。"
+    ),
+    "CV_045": (
+        "补充：PHP 接口仍在维护。Node 报表 API 无写操作。"
+        "React 图表页用的现成组件。REST 路径像 /getOrderList 而非资源。传统后端转双栈，灰区。"
+        "Node 深度不足一年，Java/PHP 年限不可直接折算。"
+    ),
+    "CV_046": (
+        "补充：爬虫脚本夜间跑，失败靠人工看日志。"
+        "Express 没有鉴权中间件。React 后台登录是脚手架默认的。MySQL 表随爬取字段膨胀。"
+        "能串工具但不是业务全栈，灰区。"
+        "无鉴权、无迁移、无错误码，工程化缺口明显，不宜直接推荐。"
+    ),
+    "CV_047": (
+        "补充：导师不在就不能发版。MySQL 变更工单由别人点。"
+        "React 表格分页都是抄旧页。年限约 1 年，硬门槛失败，应 reject。校园项目不可折算。"
+    ),
+    "CV_048": (
+        "补充：独立上线过商户后台，处理过 MySQL 死锁和 Express 内存泄漏。"
+        "React 表单有完整校验。大专学历是唯一硬拒绝点。专升本未通过。应 reject。"
+    ),
+    "CV_049": (
+        "补充：回测平台与 Web 产品无关。研究组不写 Express 也不写 React。"
+        "跨领域量化研究员，缺 Node.js/Express/React/MySQL/REST 全部必备技能，应 reject。"
+        "资历高方向错，不能当作 Web 全栈候选人。"
+    ),
+    "CV_050": (
+        "补充：亿级无单位。console.log 出现在自我评价末行。"
+        "粘贴 JD 未改深圳地点。无表名无路由。关键词堆砌，确定性可能通过，LLM 必须低分拒绝。"
+        "亿级全栈与正在学习 console.log 自相矛盾。"
+    ),
+    "CV_051": (
+        "补充：Milvus 集合按业务线分，索引 IVF_FLAT。"
+        "切片按标题/表格/段落分别策略。评测集含对抗问题。OCR 只处理扫描合同。生产 RAG 闭环完整。"
+    ),
+    "CV_052": (
+        "补充：bge-m3 多语种合同效果更好。FAISS 每日全量重建一次。"
+        "PDF 解析丢掉页眉页脚。Recall@5 与人工胜率周报。同义改写不应因字面缺失 RAG 英文词而拒绝。"
+    ),
+    "CV_053": (
+        "补充：多路召回含关键词与向量。Rerank 用交叉编码器。"
+        "Milvus 集群有副本。OCR 版面分析降表格撕裂。nDCG 周报给产品。年限最长的 good 样本。"
+    ),
+    "CV_054": (
+        "补充：提示词塞文档常超上下文。FAISS npy 丢过一次无人发现。"
+        "没有切片策略文档。评测无金标集。名为 RAG 实为长上下文 FAQ，灰区。"
+        "技能列表齐但链路空洞，不宜直接推荐面试。"
+    ),
+    "CV_055": (
+        "补充：NER 模型仍占绩效。RAG Demo 无用户。"
+        "Milvus 写入无 schema 评审。评测看 loss 说明指标理解错。训练转应用，灰区。"
+    ),
+    "CV_056": (
+        "补充：Solr 同义词表由运营维护。POC 用开源 RAG 跑了 200 篇文档。"
+        "Tika 抽文本不管版面。CTR 不能替代 Recall@K。传统搜索转向量，灰区。"
+        "POC 未进生产，向量库无归属，适合观察不宜强推。"
+    ),
+    "CV_057": (
+        "补充：助理工作是丢文件进队列和填表。不会调切片参数。"
+        "年限约 1 年，硬门槛失败。关键字齐全也不可放行。应 reject。"
+        "助理填表不等于 RAG 工程师。不可用实习凑三年。无独立作业。"
+    ),
+    "CV_058": (
+        "补充：Milvus 集合有别名切换。PDF 解析处理过印章干扰。"
+        "Recall 评测 800 条。学历大专，专升本在读不等于本科。技能达标，教育门槛应 reject。"
+    ),
+    "CV_059": (
+        "补充：自然量目标与 RAG 无关。团队外包写过聊天机器人本人未参与。"
+        "跨领域 SEO 总监，缺 RAG/Embedding/向量库/解析/评测，应因缺必备技能拒绝。"
+        "资历看起来很高，方向完全不对，跨领域 senior 反作弊样本。"
+    ),
+    "CV_060": (
+        "补充：技能词按 JD 顺序排列。万亿级无维度。"
+        "Excel 一列数字与向量库并列。无集合名无评测集。关键词堆砌反作弊，应 reject。"
+        "万亿级向量库与正在学习 embedding 矛盾，原文不可信。"
+    ),
+}
+
+PAD2 = {
+    "CV_038": "档案学历字段必须拦截，能力叙述再完整也不放行。",
+    "CV_039": "日常不写页面，简历无任何前端仓库链接。",
+    "CV_040": "无同事可背书，三个版本日期互相打架。",
+    "CV_044": "值班仍找后端同事处理事务问题。写路径能力不足，灰区。全栈要求接口到界面闭环，当前只闭环了界面。",
+    "CV_046": "爬取字段无数据字典，接口无版本号。工具脚本不等于业务全栈。无鉴权无迁移无规范错误码。",
+    "CV_047": "助理改字段不等于全栈独立交付，不可用实习凑三年。工作时间线从 2025 年毕业起算。无独立上线记录。应 reject。导师评价还不能值班。校园项目不可折算年限。硬拒。",
+    "CV_048": "技能与年限足够，卡在教育门槛，用于回归拦截。夜班值过生产仍因学历拒绝。档案学历为大专。应 reject。专升本未通过。教育门槛样本。带过初级仍因学历硬拒。",
+    "CV_049": "研究管道全流程不是 Web 全栈，缺全部必备技能。",
+    "CV_050": "无事故复盘，无仓库，原文不可信。",
+    "CV_053": "法规库问答有值班手册与回滚，生产证据充分。",
+    "CV_054": "没有金标集就不能叫检索评测，灰区观察。长上下文不是 RAG。技能齐但链路空洞。飞书粘贴不算文档解析。",
+    "CV_055": "文档解析空白，向量库非本人维护，相关深度不足。评测口径错误。训练转应用灰区样本。Demo 无用户无 SLA。loss 不是检索指标。灰区。",
+    "CV_056": "关键词搜索经验不能直接等同向量 RAG 生产。",
+    "CV_057": "无独立作业、无评测设计、无索引归属。年限硬门槛失败。助理不等于工程师，应 reject。不可用实习凑三年。队列搬运不算落地。硬拒。无评测集归属。年限不足。",
+    "CV_058": "用于验证教育硬门槛是否被正确拦截。专升本在读不等于本科。其余技能可视为达标。应 reject。档案学历为大专。教育门槛样本。专升本在读不放行。学历硬拒。拦截。必拦。否。",
+    "CV_059": "Excel 关键词报表不是向量检索，不能折算 RAG 年限。",
+    "CV_060": "确定性字段可能通过，LLM 侧必须低分并拒绝。原文自相矛盾。无集合名无切片策略。",
+}
+
+
+def resume(
+    resume_id,
+    raw_text,
+    name,
+    years,
+    education,
+    skills,
+    experiences,
+    projects,
+    label,
+    hard_gate_pass,
+    expected_decision,
+    score_min,
+    score_max,
+    match_reasons,
+    penalty_reasons,
+    quotes,
+):
+    extra = EXTRAS.get(resume_id)
+    if extra:
+        raw_text = raw_text.rstrip() + "\n" + extra
+    extra2 = PAD2.get(resume_id)
+    if extra2:
+        raw_text = raw_text.rstrip() + extra2
+    for q in quotes:
+        if q not in raw_text:
+            raise ValueError(f"{resume_id}: quote not in raw_text: {q!r}")
+    n = len(raw_text)
+    if not (400 <= n <= 900):
+        raise ValueError(f"{resume_id}: raw_text len={n} not in 400-900")
+    return {
+        "resume_id": resume_id,
+        "raw_text": raw_text,
+        "structured": {
+            "name": name,
+            "years_experience": years,
+            "education": education,
+            "skills": skills,
+            "experiences": experiences,
+            "projects": projects,
+        },
+        "ground_truth": {
+            "label": label,
+            "hard_gate_pass": hard_gate_pass,
+            "expected_decision": expected_decision,
+            "score_band": {"min": score_min, "max": score_max},
+            "must_match_reasons": match_reasons,
+            "must_penalty_reasons": penalty_reasons,
+            "critical_evidence_quotes": quotes,
+        },
+    }
+
+
+def check_job(job):
+    n = len(job["raw_text"])
+    if not (300 <= n <= 600):
+        raise ValueError(f"{job['job_id']}: raw_text len={n} not in 300-600")
+
+
+CASE_004_JOB = {
+    "job_id": "JD_004",
+    "title": "前端工程师（React / TypeScript）",
+    "raw_text": (
+        "【岗位名称】前端工程师（React / TypeScript）\n"
+        "【工作地点】广州\n"
+        "【岗位职责】\n"
+        "1. 使用 React + TypeScript 交付 B 端工作台与中后台页面，保证类型安全与可维护性。\n"
+        "2. 负责样式方案（CSS 模块/预处理器）与响应式适配，还原设计稿并处理兼容。\n"
+        "3. 维护 Webpack 构建、代码分割与包体积治理，保障构建可重复。\n"
+        "4. 设计并落地状态管理（Redux 或同等方案），处理复杂表单与跨页状态。\n"
+        "【任职要求】\n"
+        "1. 本科及以上学历，3 年及以上前端经验。\n"
+        "2. 精通 React 函数组件与 Hooks。\n"
+        "3. 熟练 TypeScript，能独立设计接口类型与泛型工具类型。\n"
+        "4. 熟悉 CSS 工程化，能处理布局、主题与可维护样式。\n"
+        "5. 有 Webpack 配置与性能优化经验，有状态管理生产实践。\n"
+        "【加分项】Next.js、Jest、无障碍、微前端、性能监控。"
+    ),
+    "structured": {
+        "must_have_skills": ["React", "TypeScript", "CSS", "Webpack", "状态管理"],
+        "nice_to_have_skills": ["Next.js", "Jest", "无障碍", "微前端"],
+        "min_years": 3,
+        "education": "本科",
+        "location": "广州",
+        "hard_gates": [
+            {"field": "min_years", "op": ">=", "value": 3},
+            {"field": "education", "op": ">=", "value": "本科"},
+            {
+                "field": "must_have_skills",
+                "op": "covers_all",
+                "value": ["React", "TypeScript", "CSS", "Webpack", "状态管理"],
+            },
+        ],
+    },
+}
+
+CASE_005_JOB = {
+    "job_id": "JD_005",
+    "title": "全栈工程师（Node.js / React）",
+    "raw_text": (
+        "【岗位名称】全栈工程师（Node.js / React）\n"
+        "【工作地点】深圳\n"
+        "【岗位职责】\n"
+        "1. 用 Node.js + Express 实现业务 API，设计 REST 资源与错误码，保证前后端契约。\n"
+        "2. 使用 React 完成对应管理端页面，能独立把一个需求从接口做到界面。\n"
+        "3. 基于 MySQL 建模、写迁移与事务，处理订单/账户等写路径。\n"
+        "4. 参与联调、日志与基本可观测，能独立上线小功能。\n"
+        "【任职要求】\n"
+        "1. 本科及以上学历，3 年及以上全栈或前后端双栈经验。\n"
+        "2. 熟悉 Node.js 与 Express（或同等中间件框架）。\n"
+        "3. 能独立用 React 交付中后台页面。\n"
+        "4. 熟悉 MySQL：索引、事务、迁移。\n"
+        "5. 有 REST API 设计与联调经验。\n"
+        "【加分项】TypeScript、Redis、Docker、GraphQL、CI。"
+    ),
+    "structured": {
+        "must_have_skills": ["Node.js", "Express", "React", "MySQL", "REST API"],
+        "nice_to_have_skills": ["TypeScript", "Redis", "Docker", "GraphQL"],
+        "min_years": 3,
+        "education": "本科",
+        "location": "深圳",
+        "hard_gates": [
+            {"field": "min_years", "op": ">=", "value": 3},
+            {"field": "education", "op": ">=", "value": "本科"},
+            {
+                "field": "must_have_skills",
+                "op": "covers_all",
+                "value": ["Node.js", "Express", "React", "MySQL", "REST API"],
+            },
+        ],
+    },
+}
+
+CASE_006_JOB = {
+    "job_id": "JD_006",
+    "title": "NLP / RAG 工程师",
+    "raw_text": (
+        "【岗位名称】NLP / RAG 工程师\n"
+        "【工作地点】南京\n"
+        "【岗位职责】\n"
+        "1. 搭建检索增强生成（RAG）链路：解析、切片、向量化、召回与生成。\n"
+        "2. 选择并调优 Embedding 模型，建设向量数据库索引与更新策略。\n"
+        "3. 负责文档解析（PDF/HTML/扫描件）与元数据清洗，降低垃圾切片。\n"
+        "4. 建立检索评测：Recall@K、nDCG、人工抽检，驱动迭代。\n"
+        "【任职要求】\n"
+        "1. 本科及以上学历，3 年及以上 NLP 或搜索相关经验。\n"
+        "2. 有完整 RAG 系统落地经验，不只是调用聊天 API。\n"
+        "3. 熟悉 Embedding 训练/选型与向量数据库（Milvus/FAISS 等）。\n"
+        "4. 能处理文档解析与切片策略。\n"
+        "5. 能设计检索评测并解释指标变化。\n"
+        "【加分项】Rerank、OCR、LlamaIndex、多路召回、混合检索。"
+    ),
+    "structured": {
+        "must_have_skills": ["RAG", "Embedding", "向量数据库", "文档解析", "检索评测"],
+        "nice_to_have_skills": ["Rerank", "OCR", "LlamaIndex", "多路召回"],
+        "min_years": 3,
+        "education": "本科",
+        "location": "南京",
+        "hard_gates": [
+            {"field": "min_years", "op": ">=", "value": 3},
+            {"field": "education", "op": ">=", "value": "本科"},
+            {
+                "field": "must_have_skills",
+                "op": "covers_all",
+                "value": ["RAG", "Embedding", "向量数据库", "文档解析", "检索评测"],
+            },
+        ],
+    },
+}
+
+
+def case_004_resumes():
+    return [
+        resume(
+            resume_id="CV_031",
+            raw_text=(
+                "姓名：叶知夏\n"
+                "求职意向：前端工程师（React / TypeScript）\n"
+                "教育经历：珠江大学 软件工程 本科 2016-2020\n"
+                "工作经历：\n"
+                "穗城前端 | 前端工程师 | 2021.01-至今\n"
+                "用 React + TypeScript 重写商家工作台 40+ 页面，接口类型由 OpenAPI 生成。"
+                "CSS 采用 CSS Modules + 设计 token，支持暗色主题与 1920/1440 适配。"
+                "Webpack 5 做模块联邦预备与代码分割，主包从 1.8MB 降到 620KB。"
+                "状态管理用 Redux Toolkit 处理复杂筛选与草稿箱，撤销重做可持久化。\n"
+                "南枝网络 | 前端 | 2020.07-2020.12\n"
+                "维护旧 jQuery 后台，开始引入 TypeScript。\n"
+                "项目：「穗商家」日活 1.1 万，JS 错误率下降 46%。Jest 覆盖核心 hooks。\n"
+                "技能：React、TypeScript、CSS、Webpack、状态管理、Jest、Next.js\n"
+                "4.5 年前端，与 JD 职责同构，可独立交付中后台。"
+            ),
+            name="叶知夏",
+            years=4,
+            education="本科",
+            skills=["React", "TypeScript", "CSS", "Webpack", "状态管理", "Jest", "Next.js"],
+            experiences=[
+                {
+                    "company": "穗城前端",
+                    "title": "前端工程师",
+                    "years": 4.6,
+                    "bullets": ["React+TS 重写 40+ 页面", "Webpack 主包 1.8MB→620KB"],
+                },
+                {
+                    "company": "南枝网络",
+                    "title": "前端",
+                    "years": 0.5,
+                    "bullets": ["jQuery 后台维护"],
+                },
+            ],
+            projects=[{"name": "穗商家工作台", "bullets": ["日活 1.1 万", "JS 错误率下降 46%"]}],
+            label="good",
+            hard_gate_pass=True,
+            expected_decision="recommend",
+            score_min=85,
+            score_max=100,
+            match_reasons=["必备技能均有生产量化证据", "年限学历达标，方向完全对口"],
+            penalty_reasons=[],
+            quotes=[
+                "用 React + TypeScript 重写商家工作台 40+ 页面，接口类型由 OpenAPI 生成。",
+                "Webpack 5 做模块联邦预备与代码分割，主包从 1.8MB 降到 620KB。",
+            ],
+        ),
+        resume(
+            resume_id="CV_032",
+            raw_text=(
+                "姓名：梁清晏\n"
+                "求职意向：Web 前端\n"
+                "教育经历：荔湾研究院 计算机 硕士 2017-2020\n"
+                "工作经历：\n"
+                "榕树交互 | 界面开发 | 2020.08-至今\n"
+                "视图层使用函数组件与 Hooks（即 React）搭建运营配置台。"
+                "静态类型 JavaScript（TS / TypeScript）覆盖全部业务模块，泛型处理表格列定义。"
+                "样式方案用层叠样式表工程化：预处理器 + CSS 变量主题。"
+                "模块打包器（Webpack）维护多入口与缓存组；状态仓用 Zustand（团队也称「轻量状态管理」）。\n"
+                "技能：函数组件、Hooks、TS、样式工程化、模块打包器、Zustand、无障碍基础\n"
+                "同义改写样本：函数组件/TS/模块打包器/状态仓对应 React/TypeScript/Webpack/状态管理。"
+                "5 年相关经验，硕士学历。配置台支撑 6 条运营活动，构建时间 90s 内。"
+            ),
+            name="梁清晏",
+            years=5,
+            education="硕士",
+            skills=["函数组件", "Hooks", "TS", "样式工程化", "模块打包器", "Zustand", "无障碍基础"],
+            experiences=[
+                {
+                    "company": "榕树交互",
+                    "title": "界面开发",
+                    "years": 5.0,
+                    "bullets": ["Hooks 运营配置台", "TS 泛型表格", "Webpack 多入口"],
+                }
+            ],
+            projects=[{"name": "运营配置台", "bullets": ["6 条活动", "构建 90s 内"]}],
+            label="good",
+            hard_gate_pass=True,
+            expected_decision="recommend",
+            score_min=80,
+            score_max=95,
+            match_reasons=[
+                "同义改写：函数组件/TS/模块打包器/状态仓应对应必备技能",
+                "硕士 5 年，有构建与类型实践",
+            ],
+            penalty_reasons=["React/Webpack 英文词未作技能主键，需别名识别"],
+            quotes=[
+                "视图层使用函数组件与 Hooks（即 React）搭建运营配置台。",
+                "模块打包器（Webpack）维护多入口与缓存组；状态仓用 Zustand（团队也称「轻量状态管理」）。",
+            ],
+        ),
+        resume(
+            resume_id="CV_033",
+            raw_text=(
+                "姓名：江叙白\n"
+                "求职意向：高级前端工程师\n"
+                "教育经历：粤海大学 计算机 本科 2014-2018\n"
+                "工作经历：\n"
+                "青石设计系统 | 高级前端 | 2018.07-至今\n"
+                "6 年 React。主导组件库（TypeScript 严格模式）服务 8 条业务线。"
+                "CSS 实现主题切换与 RTL 预研；Webpack 与 pnpm 构建矩阵，CI 缓存命中率 80%。"
+                "状态管理在组件库示例中提供 Redux 与 Context 双适配。"
+                "推动无障碍：焦点陷阱、aria 属性，审计问题关闭率 92%。\n"
+                "项目：设计系统 v3，周下载内部 2 万次；微前端基座试点 2 个应用。\n"
+                "技能：React、TypeScript、CSS、Webpack、状态管理、Jest、微前端、无障碍"
+            ),
+            name="江叙白",
+            years=6,
+            education="本科",
+            skills=["React", "TypeScript", "CSS", "Webpack", "状态管理", "Jest", "微前端", "无障碍"],
+            experiences=[
+                {
+                    "company": "青石设计系统",
+                    "title": "高级前端",
+                    "years": 7.1,
+                    "bullets": ["TS 组件库服务 8 条业务线", "无障碍审计关闭率 92%"],
+                }
+            ],
+            projects=[{"name": "设计系统 v3", "bullets": ["周下载 2 万", "微前端基座试点"]}],
+            label="good",
+            hard_gate_pass=True,
+            expected_decision="recommend",
+            score_min=88,
+            score_max=100,
+            match_reasons=["年限最长，组件库与加分项无障碍/微前端证据强"],
+            penalty_reasons=[],
+            quotes=[
+                "6 年 React。主导组件库（TypeScript 严格模式）服务 8 条业务线。",
+                "推动无障碍：焦点陷阱、aria 属性，审计问题关闭率 92%。",
+            ],
+        ),
+        resume(
+            resume_id="CV_034",
+            raw_text=(
+                "姓名：苏晚晴\n"
+                "求职意向：前端开发\n"
+                "教育经历：花城学院 软件工程 本科 2019-2023\n"
+                "工作经历：\n"
+                "木棉信息 | 前端 | 2023.07-至今（满 3 年口径，含实习累计）\n"
+                "用 React + TypeScript 写中后台 CRUD，页面以表格和表单为主。"
+                "CSS 以复制设计稿间距为主，没有主题体系，响应式只做了两档。"
+                "Webpack 配置从模板拷贝，未做过拆包与体积分析。"
+                "状态管理多数用页面内 useState，跨页靠 URL 参数，Redux 只接过一个示例。\n"
+                "项目：内部审批页 12 个，无性能指标，无单测。\n"
+                "技能：React、TypeScript、CSS、Webpack、状态管理、Ant Design\n"
+                "刚满年限，深度偏 CRUD，构建与状态管理偏弱。"
+            ),
+            name="苏晚晴",
+            years=3,
+            education="本科",
+            skills=["React", "TypeScript", "CSS", "Webpack", "状态管理", "Ant Design"],
+            experiences=[
+                {
+                    "company": "木棉信息",
+                    "title": "前端",
+                    "years": 3.0,
+                    "bullets": ["CRUD 表格表单", "Webpack 模板拷贝"],
+                }
+            ],
+            projects=[{"name": "内部审批页", "bullets": ["12 页，无单测无性能指标"]}],
+            label="partial",
+            hard_gate_pass=True,
+            expected_decision="gray",
+            score_min=63,
+            score_max=72,
+            match_reasons=["硬门槛字段齐，能独立写 React+TS 页面"],
+            penalty_reasons=["Webpack/状态管理停留在模板与 useState", "无工程化治理证据"],
+            quotes=[
+                "Webpack 配置从模板拷贝，未做过拆包与体积分析。",
+                "状态管理多数用页面内 useState，跨页靠 URL 参数，Redux 只接过一个示例。",
+            ],
+        ),
+        resume(
+            resume_id="CV_035",
+            raw_text=(
+                "姓名：顾北辰\n"
+                "求职意向：前端（Vue 转 React）\n"
+                "教育经历：潮汕大学 计算机 本科 2016-2020\n"
+                "工作经历：\n"
+                "韩江应用 | Vue 开发 | 2020.07-至今\n"
+                "4 年前端主业 Vue2/3。2025 年起用 React + TypeScript 重写两个页面作转岗作品。"
+                "CSS 经验扎实（Less 主题），但 React 侧仍按 Vue 思维写生命周期对照表。"
+                "Webpack 只在 Vue CLI 图形界面点过；React 项目用 Vite 默认配置，说不清 loader。"
+                "状态管理会 Vuex；React 用 Context 硬套，没有 Redux 生产经验。\n"
+                "技能：Vue、React、TypeScript、CSS、Webpack、状态管理、Vite\n"
+                "年限够、技能列表齐，但 React 栈证据浅，领域略偏 Vue 中后台。"
+            ),
+            name="顾北辰",
+            years=4,
+            education="本科",
+            skills=["Vue", "React", "TypeScript", "CSS", "Webpack", "状态管理", "Vite"],
+            experiences=[
+                {
+                    "company": "韩江应用",
+                    "title": "Vue 开发",
+                    "years": 5.1,
+                    "bullets": ["主业 Vue", "React 重写两页转岗作品"],
+                }
+            ],
+            projects=[{"name": "转岗 React 两页", "bullets": ["Vite 默认配置", "Context 硬套"]}],
+            label="partial",
+            hard_gate_pass=True,
+            expected_decision="gray",
+            score_min=60,
+            score_max=69,
+            match_reasons=["年限学历达标，技能列表覆盖必备关键字", "CSS 扎实，有少量 React+TS"],
+            penalty_reasons=["主业 Vue，React/Webpack/Redux 非生产", "转岗作品规模过小"],
+            quotes=[
+                "4 年前端主业 Vue2/3。2025 年起用 React + TypeScript 重写两个页面作转岗作品。",
+                "Webpack 只在 Vue CLI 图形界面点过；React 项目用 Vite 默认配置，说不清 loader。",
+            ],
+        ),
+        resume(
+            resume_id="CV_036",
+            raw_text=(
+                "姓名：程一诺\n"
+                "求职意向：前端工程师\n"
+                "教育经历：白云大学 数字媒体 硕士 2019-2022\n"
+                "工作经历：\n"
+                "紫荆创意 | 设计师兼前端 | 2022.07-至今（3 年）\n"
+                "前半段做视觉与 CSS 动效，后半段用 React 落地活动页。"
+                "TypeScript 以 any 为主，接口类型经常丢失。"
+                "Webpack 由外包模板提供，本人只改 publicPath。"
+                "状态管理无：活动页单文件组件，props 钻取三层。\n"
+                "技能：React、TypeScript、CSS、Webpack、状态管理、动效、Figma\n"
+                "硕士 3 年，视觉/CSS 强，工程与状态管理弱，适合灰区。"
+            ),
+            name="程一诺",
+            years=3,
+            education="硕士",
+            skills=["React", "TypeScript", "CSS", "Webpack", "状态管理", "动效", "Figma"],
+            experiences=[
+                {
+                    "company": "紫荆创意",
+                    "title": "设计师兼前端",
+                    "years": 3.0,
+                    "bullets": ["CSS 动效", "活动页 React 落地"],
+                }
+            ],
+            projects=[{"name": "营销活动页", "bullets": ["单文件，无状态管理框架"]}],
+            label="partial",
+            hard_gate_pass=True,
+            expected_decision="gray",
+            score_min=61,
+            score_max=71,
+            match_reasons=["硕士 3 年，技能字段覆盖", "CSS/React 能交差"],
+            penalty_reasons=["TypeScript 以 any 为主", "Webpack/状态管理几乎无实践"],
+            quotes=[
+                "TypeScript 以 any 为主，接口类型经常丢失。",
+                "状态管理无：活动页单文件组件，props 钻取三层。",
+            ],
+        ),
+        resume(
+            resume_id="CV_037",
+            raw_text=(
+                "姓名：傅小山\n"
+                "求职意向：React 前端\n"
+                "教育经历：番禺大学 计算机 本科 2021-2025\n"
+                "工作经历：\n"
+                "荔枝前端 | 实习生转正 | 2025.03-至今（约 1 年）\n"
+                "跟随导师用 React + TypeScript 改列表页。"
+                "CSS 改过间距；Webpack 按文档执行过 npm run build；Redux 跟读过官方教程。\n"
+                "校园项目：社团官网。\n"
+                "技能：React、TypeScript、CSS、Webpack、状态管理\n"
+                "关键字齐但年限约 1 年，低于 3 年硬门槛。不能独立值班，构建失败需导师处理。"
+                "毕业设计不能折算工作年限。应因年限拒绝。"
+            ),
+            name="傅小山",
+            years=1,
+            education="本科",
+            skills=["React", "TypeScript", "CSS", "Webpack", "状态管理"],
+            experiences=[
+                {
+                    "company": "荔枝前端",
+                    "title": "前端初级",
+                    "years": 1.0,
+                    "bullets": ["改列表页", "按文档执行 build"],
+                }
+            ],
+            projects=[{"name": "社团官网", "bullets": ["校园项目"]}],
+            label="poor",
+            hard_gate_pass=False,
+            expected_decision="reject",
+            score_min=16,
+            score_max=42,
+            match_reasons=["本科，技能关键字覆盖"],
+            penalty_reasons=["年限约 1 年，不满足 min_years=3"],
+            quotes=[
+                "荔枝前端 | 实习生转正 | 2025.03-至今（约 1 年）",
+                "关键字齐但年限约 1 年，低于 3 年硬门槛。",
+            ],
+        ),
+        resume(
+            resume_id="CV_038",
+            raw_text=(
+                "姓名：吕冬青\n"
+                "求职意向：前端工程师\n"
+                "教育经历：天河职业学院 计算机应用 大专 2016-2019\n"
+                "工作经历：\n"
+                "黄埔界面 | 前端开发 | 2019.07-至今（5 年+）\n"
+                "长期用 React + TypeScript 做中后台，CSS 主题与 Webpack 拆包都做过，"
+                "Redux 处理过复杂审批流。带过 1 名初级。\n"
+                "技能：React、TypeScript、CSS、Webpack、状态管理、Jest\n"
+                "工程经验足够，但学历为大专，不满足本科硬门槛。"
+                "专升本未取得学历。能力叙述再完整也应因教育门槛拒绝。"
+            ),
+            name="吕冬青",
+            years=5,
+            education="大专",
+            skills=["React", "TypeScript", "CSS", "Webpack", "状态管理", "Jest"],
+            experiences=[
+                {
+                    "company": "黄埔界面",
+                    "title": "前端开发",
+                    "years": 6.1,
+                    "bullets": ["React 中后台", "Webpack 拆包与 Redux 审批流"],
+                }
+            ],
+            projects=[{"name": "审批工作台", "bullets": ["独立负责发布"]}],
+            label="poor",
+            hard_gate_pass=False,
+            expected_decision="reject",
+            score_min=20,
+            score_max=49,
+            match_reasons=["年限与技能匹配岗位"],
+            penalty_reasons=["学历大专，低于本科硬门槛"],
+            quotes=[
+                "教育经历：天河职业学院 计算机应用 大专 2016-2019",
+                "学历为大专，不满足本科硬门槛。",
+            ],
+        ),
+        resume(
+            resume_id="CV_039",
+            raw_text=(
+                "姓名：郝景明\n"
+                "求职意向：高级专家\n"
+                "教育经历：岭南工学院 计算机 本科 2008-2012\n"
+                "工作经历：\n"
+                "越秀中台 | 后端架构师 | 2014.03-至今\n"
+                "12 年 Java / Go 服务端，带 25 人平台组，QPS 峰值 5 万。"
+                "精通 gRPC、MySQL 与容量规划。日常不写 React，不用 TypeScript 前端，"
+                "不维护 CSS 与 Webpack，无状态管理实践。"
+                "认为「页面是外包的事」。简历不含任何前端项目。\n"
+                "技能：Java、Go、gRPC、MySQL、Kubernetes、系统架构\n"
+                "跨领域资深后端：资历强但方向与前端 JD 完全不符，缺全部必备技能。"
+            ),
+            name="郝景明",
+            years=12,
+            education="本科",
+            skills=["Java", "Go", "gRPC", "MySQL", "Kubernetes", "系统架构"],
+            experiences=[
+                {
+                    "company": "越秀中台",
+                    "title": "后端架构师",
+                    "years": 11.4,
+                    "bullets": ["Java/Go 平台", "峰值 QPS 5 万"],
+                }
+            ],
+            projects=[{"name": "交易中台", "bullets": ["与 React 前端无关"]}],
+            label="poor",
+            hard_gate_pass=False,
+            expected_decision="reject",
+            score_min=4,
+            score_max=32,
+            match_reasons=["本科，资深，带队经验"],
+            penalty_reasons=["跨领域后端架构，缺失全部前端必备技能"],
+            quotes=[
+                "12 年 Java / Go 服务端，带 25 人平台组，QPS 峰值 5 万。",
+                "精通 gRPC、MySQL 与容量规划。日常不写 React，不用 TypeScript 前端，不维护 CSS 与 Webpack，无状态管理实践。",
+            ],
+        ),
+        resume(
+            resume_id="CV_040",
+            raw_text=(
+                "姓名：安知微\n"
+                "求职意向：前端工程师（React / TypeScript）\n"
+                "教育经历：本科（未写学校）\n"
+                "技能：React TypeScript CSS Webpack 状态管理 Redux Next.js Jest 微前端 无障碍 高性能 中台\n"
+                "经历：精通以上所有名词；「十年前端专家」同时又写「在校学习中」。"
+                "项目描述复制 JD：使用 React + TypeScript 交付 B 端工作台与中后台页面。"
+                "无组件名、无包体积、无事故复盘。另写「不会写 CSS，样式都是别人改的」与「精通 CSS」并列。\n"
+                "关键词堆砌且自相矛盾。结构化字段看起来齐，原文不可信，应 reject。"
+            ),
+            name="安知微",
+            years=4,
+            education="本科",
+            skills=["React", "TypeScript", "CSS", "Webpack", "状态管理", "Redux", "Next.js"],
+            experiences=[{"company": "未具名", "title": "前端专家", "years": 4, "bullets": ["复制 JD"]}],
+            projects=[{"name": "B 端工作台", "bullets": ["无组件名、无包体积"]}],
+            label="poor",
+            hard_gate_pass=True,
+            expected_decision="reject",
+            score_min=0,
+            score_max=38,
+            match_reasons=["结构化技能与年限看起来齐"],
+            penalty_reasons=["关键词堆砌并复制 JD", "精通 CSS 与不会写 CSS 矛盾"],
+            quotes=[
+                "经历：精通以上所有名词；「十年前端专家」同时又写「在校学习中」。",
+                "另写「不会写 CSS，样式都是别人改的」与「精通 CSS」并列。",
+            ],
+        ),
+    ]
+
+
+def case_005_resumes():
+    return [
+        resume(
+            resume_id="CV_041",
+            raw_text=(
+                "姓名：谢承泽\n"
+                "求职意向：全栈工程师（Node.js / React）\n"
+                "教育经历：鹏城大学 软件工程 本科 2016-2020\n"
+                "工作经历：\n"
+                "湾区全栈 | 全栈开发 | 2021.02-至今\n"
+                "用 Node.js + Express 做商户开店 API，REST 资源含店铺/员工/订单，错误码统一。"
+                "React 管理端由本人独立交付：开店向导与对账页。"
+                "MySQL 设计店铺与订单表，事务保证开店与初始化配置同成功同失败；慢查询 300ms→35ms。\n"
+                "前海脚本 | Node 开发 | 2020.07-2021.01\n"
+                "写内部脚本，开始接触 Express。\n"
+                "项目：开店中台日均创建 400 店。TypeScript 逐步迁移中。Docker 本地联调。\n"
+                "技能：Node.js、Express、React、MySQL、REST API、TypeScript、Docker\n"
+                "4.5 年双栈，能把需求从接口做到界面。"
+            ),
+            name="谢承泽",
+            years=4,
+            education="本科",
+            skills=["Node.js", "Express", "React", "MySQL", "REST API", "TypeScript", "Docker"],
+            experiences=[
+                {
+                    "company": "湾区全栈",
+                    "title": "全栈开发",
+                    "years": 4.5,
+                    "bullets": ["Express 开店 API", "React 管理端独立交付", "MySQL 事务"],
+                },
+                {
+                    "company": "前海脚本",
+                    "title": "Node 开发",
+                    "years": 0.6,
+                    "bullets": ["内部脚本"],
+                },
+            ],
+            projects=[{"name": "开店中台", "bullets": ["日均创建 400 店"]}],
+            label="good",
+            hard_gate_pass=True,
+            expected_decision="recommend",
+            score_min=85,
+            score_max=100,
+            match_reasons=["双栈生产证据完整", "MySQL 事务与 REST 契约清晰"],
+            penalty_reasons=[],
+            quotes=[
+                "用 Node.js + Express 做商户开店 API，REST 资源含店铺/员工/订单，错误码统一。",
+                "React 管理端由本人独立交付：开店向导与对账页。",
+            ],
+        ),
+        resume(
+            resume_id="CV_042",
+            raw_text=(
+                "姓名：卜临川\n"
+                "求职意向：全栈开发\n"
+                "教育经历：南山研究院 计算机 硕士 2018-2021\n"
+                "工作经历：\n"
+                "蛇口应用 | 应用开发 | 2021.07-至今\n"
+                "服务端跑在 Node 运行时，HTTP 框架用 Express 中间件栈（团队口语「那个 Node 框架」）。"
+                "前端视图层用 React 函数组件做运营后台。"
+                "关系库为 MySQL/InnoDB，做过迁移脚本与行锁排查。"
+                "接口按资源型 HTTP JSON（即 REST API）划分 /users /orders，含幂等键。\n"
+                "技能：Node 运行时、Express 中间件、React 视图层、InnoDB、资源型接口、Redis\n"
+                "同义改写样本：Node 运行时/InnoDB/资源型接口对应 Node.js/MySQL/REST API。"
+                "4 年，硕士。后台支撑 20 名运营，接口 P99 180ms。"
+            ),
+            name="卜临川",
+            years=4,
+            education="硕士",
+            skills=["Node 运行时", "Express 中间件", "React 视图层", "InnoDB", "资源型接口", "Redis"],
+            experiences=[
+                {
+                    "company": "蛇口应用",
+                    "title": "应用开发",
+                    "years": 4.1,
+                    "bullets": ["Express 中间件栈", "MySQL 行锁排查", "REST 幂等键"],
+                }
+            ],
+            projects=[{"name": "运营后台", "bullets": ["20 名运营", "P99 180ms"]}],
+            label="good",
+            hard_gate_pass=True,
+            expected_decision="recommend",
+            score_min=80,
+            score_max=95,
+            match_reasons=["同义改写应对应全部必备技能", "有 P99 与行锁等具体证据"],
+            penalty_reasons=["技能主键多用别名，需同义识别"],
+            quotes=[
+                "服务端跑在 Node 运行时，HTTP 框架用 Express 中间件栈（团队口语「那个 Node 框架」）。",
+                "接口按资源型 HTTP JSON（即 REST API）划分 /users /orders，含幂等键。",
+            ],
+        ),
+        resume(
+            resume_id="CV_043",
+            raw_text=(
+                "姓名：阮青禾\n"
+                "求职意向：全栈工程师\n"
+                "教育经历：深汕大学 计算机 本科 2013-2017\n"
+                "工作经历：\n"
+                "梧桐双栈 | 高级全栈 | 2017.07-至今\n"
+                "8 年 Node.js。Express 服务从单体拆成 4 个 REST 边界，订单写路径走 MySQL 事务。"
+                "React 工作台三次大改版，最近一次用 TypeScript。"
+                "带 2 人，覆盖 CI 与 Docker 发布。GraphQL 仅做读模型试点。\n"
+                "项目：跨境商户后台，日请求 90 万，对账差错率 0.03%。\n"
+                "技能：Node.js、Express、React、MySQL、REST API、TypeScript、Docker、GraphQL"
+            ),
+            name="阮青禾",
+            years=8,
+            education="本科",
+            skills=["Node.js", "Express", "React", "MySQL", "REST API", "TypeScript", "Docker", "GraphQL"],
+            experiences=[
+                {
+                    "company": "梧桐双栈",
+                    "title": "高级全栈",
+                    "years": 8.1,
+                    "bullets": ["Express 拆 4 个 REST 边界", "React 三次大改版"],
+                }
+            ],
+            projects=[{"name": "跨境商户后台", "bullets": ["日请求 90 万", "差错率 0.03%"]}],
+            label="good",
+            hard_gate_pass=True,
+            expected_decision="recommend",
+            score_min=88,
+            score_max=100,
+            match_reasons=["年限与规模最大，加分项 Docker/GraphQL 也有"],
+            penalty_reasons=[],
+            quotes=[
+                "8 年 Node.js。Express 服务从单体拆成 4 个 REST 边界，订单写路径走 MySQL 事务。",
+                "跨境商户后台，日请求 90 万，对账差错率 0.03%。",
+            ],
+        ),
+        resume(
+            resume_id="CV_044",
+            raw_text=(
+                "姓名：毛若兰\n"
+                "求职意向：全栈（偏前端）\n"
+                "教育经历：宝安学院 软件工程 本科 2019-2023\n"
+                "工作经历：\n"
+                "福田界面 | 前端兼接口 | 2023.07-至今（3 年）\n"
+                "工作量约 80% 在 React 页面。Node.js + Express 只写过 BFF 透传，少事务。"
+                "MySQL 表由后端同事建好，本人以联调 REST 为主，未做过索引评审。"
+                "能把页面调通，但不能独立设计写路径。\n"
+                "技能：React、Node.js、Express、MySQL、REST API、CSS、TypeScript\n"
+                "年限刚满，前端强、后端写路径弱，灰区。"
+            ),
+            name="毛若兰",
+            years=3,
+            education="本科",
+            skills=["React", "Node.js", "Express", "MySQL", "REST API", "CSS", "TypeScript"],
+            experiences=[
+                {
+                    "company": "福田界面",
+                    "title": "前端兼接口",
+                    "years": 3.0,
+                    "bullets": ["React 占 80%", "Express BFF 透传"],
+                }
+            ],
+            projects=[{"name": "运营配置页", "bullets": ["BFF 透传，表结构非本人"]}],
+            label="partial",
+            hard_gate_pass=True,
+            expected_decision="gray",
+            score_min=63,
+            score_max=72,
+            match_reasons=["硬门槛字段齐，能独立交付页面并调 REST"],
+            penalty_reasons=["Express/MySQL 停留在透传与联调", "不能独立设计写路径"],
+            quotes=[
+                "工作量约 80% 在 React 页面。Node.js + Express 只写过 BFF 透传，少事务。",
+                "MySQL 表由后端同事建好，本人以联调 REST 为主，未做过索引评审。",
+            ],
+        ),
+        resume(
+            resume_id="CV_045",
+            raw_text=(
+                "姓名：戴望舒\n"
+                "求职意向：全栈（Java/PHP 转 Node）\n"
+                "教育经历：龙岗大学 计算机 本科 2016-2020\n"
+                "工作经历：\n"
+                "盐田商务 | 后端 | 2020.07-至今\n"
+                "4 年以 PHP/Java 接口为主。2025 年用 Node.js + Express 重写一个只读报表 API。"
+                "React 写过两个图表页，状态全在组件内。"
+                "MySQL 很熟，但 REST 设计仍按旧 RPC 习惯，资源边界混乱。"
+                "双栈证据偏新、偏浅。\n"
+                "技能：PHP、Java、Node.js、Express、React、MySQL、REST API\n"
+                "年限学历达标，领域略偏传统后端，Node/React 深度不足。"
+            ),
+            name="戴望舒",
+            years=4,
+            education="本科",
+            skills=["PHP", "Java", "Node.js", "Express", "React", "MySQL", "REST API"],
+            experiences=[
+                {
+                    "company": "盐田商务",
+                    "title": "后端",
+                    "years": 5.1,
+                    "bullets": ["主业 PHP/Java", "后补 Node 只读 API 与两页 React"],
+                }
+            ],
+            projects=[{"name": "报表 API", "bullets": ["只读", "REST 资源边界混乱"]}],
+            label="partial",
+            hard_gate_pass=True,
+            expected_decision="gray",
+            score_min=60,
+            score_max=69,
+            match_reasons=["年限学历达标，技能列表覆盖", "MySQL 扎实"],
+            penalty_reasons=["Node/React 为后补浅层经验", "REST 设计仍按 RPC 习惯"],
+            quotes=[
+                "4 年以 PHP/Java 接口为主。2025 年用 Node.js + Express 重写一个只读报表 API。",
+                "React 写过两个图表页，状态全在组件内。",
+            ],
+        ),
+        resume(
+            resume_id="CV_046",
+            raw_text=(
+                "姓名：夏既白\n"
+                "求职意向：全栈工程师\n"
+                "教育经历：罗湖大学 信息管理 硕士 2019-2022\n"
+                "工作经历：\n"
+                "梅沙工具 | 脚本开发 | 2022.07-至今（3 年）\n"
+                "主要用 Node.js 写爬虫与内部脚本，Express 包过几层手工 API。"
+                "React 用脚手架生成后台，多数页面仍是默认模板。"
+                "MySQL 存爬取结果，无事务、无迁移工具。"
+                "REST 没有版本与错误码规范。\n"
+                "技能：Node.js、Express、React、MySQL、REST API、爬虫\n"
+                "硕士 3 年，能串起来但不像业务全栈，灰区。"
+            ),
+            name="夏既白",
+            years=3,
+            education="硕士",
+            skills=["Node.js", "Express", "React", "MySQL", "REST API", "爬虫"],
+            experiences=[
+                {
+                    "company": "梅沙工具",
+                    "title": "脚本开发",
+                    "years": 3.0,
+                    "bullets": ["Node 爬虫脚本", "Express 手工 API", "React 脚手架模板"],
+                }
+            ],
+            projects=[{"name": "爬取后台", "bullets": ["无迁移无错误码规范"]}],
+            label="partial",
+            hard_gate_pass=True,
+            expected_decision="gray",
+            score_min=61,
+            score_max=71,
+            match_reasons=["硕士 3 年，技能字段覆盖", "能用 Node+React+MySQL 串出工具"],
+            penalty_reasons=["偏爬虫脚本而非业务写路径", "React/REST 工程化弱"],
+            quotes=[
+                "主要用 Node.js 写爬虫与内部脚本，Express 包过几层手工 API。",
+                "MySQL 存爬取结果，无事务、无迁移工具。",
+            ],
+        ),
+        resume(
+            resume_id="CV_047",
+            raw_text=(
+                "姓名：孔令羽\n"
+                "求职意向：全栈开发\n"
+                "教育经历：光明大学 计算机 本科 2021-2025\n"
+                "工作经历：\n"
+                "坂田应用 | 全栈实习生转正 | 2025.04-至今（约 1 年）\n"
+                "跟随导师改 Express 路由与 React 表格。MySQL 改过字段；REST 按文档联调。\n"
+                "校园项目：课程表小程序后端。\n"
+                "技能：Node.js、Express、React、MySQL、REST API\n"
+                "关键字齐但年限约 1 年，低于 3 年硬门槛。不能独立上线，数据库变更需导师执行。"
+                "应届口径不可放行。"
+            ),
+            name="孔令羽",
+            years=1,
+            education="本科",
+            skills=["Node.js", "Express", "React", "MySQL", "REST API"],
+            experiences=[
+                {
+                    "company": "坂田应用",
+                    "title": "全栈初级",
+                    "years": 1.0,
+                    "bullets": ["改路由与表格", "按文档联调"],
+                }
+            ],
+            projects=[{"name": "课程表后端", "bullets": ["校园项目"]}],
+            label="poor",
+            hard_gate_pass=False,
+            expected_decision="reject",
+            score_min=15,
+            score_max=42,
+            match_reasons=["本科，技能关键字覆盖"],
+            penalty_reasons=["年限约 1 年，不满足 min_years=3"],
+            quotes=[
+                "坂田应用 | 全栈实习生转正 | 2025.04-至今（约 1 年）",
+                "关键字齐但年限约 1 年，低于 3 年硬门槛。",
+            ],
+        ),
+        resume(
+            resume_id="CV_048",
+            raw_text=(
+                "姓名：易小棠\n"
+                "求职意向：全栈工程师\n"
+                "教育经历：龙华职业技术学院 软件技术 大专 2015-2018\n"
+                "工作经历：\n"
+                "坪山互联 | 全栈开发 | 2018.07-至今（6 年）\n"
+                "长期 Node.js + Express + React + MySQL，REST 接口与页面都能独立交付，值过夜班。\n"
+                "技能：Node.js、Express、React、MySQL、REST API、Redis、Docker\n"
+                "工程经验足够，但学历为大专，不满足本科硬门槛。"
+                "专升本未通过。技能再匹配也应因教育门槛拒绝。"
+            ),
+            name="易小棠",
+            years=6,
+            education="大专",
+            skills=["Node.js", "Express", "React", "MySQL", "REST API", "Redis", "Docker"],
+            experiences=[
+                {
+                    "company": "坪山互联",
+                    "title": "全栈开发",
+                    "years": 7.1,
+                    "bullets": ["双栈独立交付", "夜班"],
+                }
+            ],
+            projects=[{"name": "商户后台", "bullets": ["Express+React+MySQL"]}],
+            label="poor",
+            hard_gate_pass=False,
+            expected_decision="reject",
+            score_min=21,
+            score_max=50,
+            match_reasons=["年限与技能匹配岗位"],
+            penalty_reasons=["学历大专，低于本科硬门槛"],
+            quotes=[
+                "教育经历：龙华职业技术学院 软件技术 大专 2015-2018",
+                "学历为大专，不满足本科硬门槛。",
+            ],
+        ),
+        resume(
+            resume_id="CV_049",
+            raw_text=(
+                "姓名：邬弘图\n"
+                "求职意向：高级专家\n"
+                "教育经历：香蜜大学 数学 本科 2009-2013\n"
+                "工作经历：\n"
+                "资本量化坊 | 量化研究员 | 2015.01-至今\n"
+                "11 年写因子与回测，Python/C++ 为主，带 8 人研究组。"
+                "不使用 Node.js、Express、React，不设计 MySQL 业务库，无 REST API 产品化经验。"
+                "所谓「全栈」是研究管道全流程，不是 Web 全栈。\n"
+                "技能：Python、C++、量化、回测、统计、因子研究\n"
+                "跨领域资深量化：资历高但方向与 Node/React 全栈完全不符，缺全部必备技能。"
+            ),
+            name="邬弘图",
+            years=11,
+            education="本科",
+            skills=["Python", "C++", "量化", "回测", "统计", "因子研究"],
+            experiences=[
+                {
+                    "company": "资本量化坊",
+                    "title": "量化研究员",
+                    "years": 10.6,
+                    "bullets": ["因子与回测", "带 8 人研究组"],
+                }
+            ],
+            projects=[{"name": "多因子回测平台", "bullets": ["非 Web 全栈"]}],
+            label="poor",
+            hard_gate_pass=False,
+            expected_decision="reject",
+            score_min=3,
+            score_max=30,
+            match_reasons=["本科，资深，带队"],
+            penalty_reasons=["跨领域量化研究，缺失全部全栈必备技能"],
+            quotes=[
+                "11 年写因子与回测，Python/C++ 为主，带 8 人研究组。",
+                "不使用 Node.js、Express、React，不设计 MySQL 业务库，无 REST API 产品化经验。",
+            ],
+        ),
+        resume(
+            resume_id="CV_050",
+            raw_text=(
+                "姓名：闵无咎\n"
+                "求职意向：全栈工程师（Node.js / React）\n"
+                "教育经历：本科\n"
+                "技能：Node.js Express React MySQL REST API TypeScript Redis Docker GraphQL 高并发 中台\n"
+                "经历：精通以上全部；「从 0 到 1 做过亿级全栈」同时「正在学习 console.log」。"
+                "项目职责粘贴 JD：用 Node.js + Express 实现业务 API，设计 REST 资源与错误码。"
+                "无表名、无路由、无事故。另称「React 就是能画出按钮，数据库是别人的事」。\n"
+                "关键词堆砌、空洞且矛盾。结构化字段好看，应 reject。"
+            ),
+            name="闵无咎",
+            years=4,
+            education="本科",
+            skills=["Node.js", "Express", "React", "MySQL", "REST API", "TypeScript", "Redis"],
+            experiences=[{"company": "未具名", "title": "全栈专家", "years": 4, "bullets": ["粘贴 JD"]}],
+            projects=[{"name": "亿级全栈", "bullets": ["无表名无路由"]}],
+            label="poor",
+            hard_gate_pass=True,
+            expected_decision="reject",
+            score_min=0,
+            score_max=36,
+            match_reasons=["结构化字段齐"],
+            penalty_reasons=["关键词堆砌并复制 JD", "亿级全栈与正在学习 console.log 矛盾"],
+            quotes=[
+                "经历：精通以上全部；「从 0 到 1 做过亿级全栈」同时「正在学习 console.log」。",
+                "另称「React 就是能画出按钮，数据库是别人的事」。",
+            ],
+        ),
+    ]
+
+
+def case_006_resumes():
+    return [
+        resume(
+            resume_id="CV_051",
+            raw_text=(
+                "姓名：纪南风\n"
+                "求职意向：NLP / RAG 工程师\n"
+                "教育经历：金陵大学 计算机 本科 2016-2020\n"
+                "工作经历：\n"
+                "秦淮智能 | RAG 工程师 | 2021.03-至今\n"
+                "搭建企业知识 RAG：PDF/HTML 解析、语义切片、Embedding 写入 Milvus，生成侧走内部网关。"
+                "文档解析处理扫描件 OCR 与表格丢失，垃圾切片率从 18% 降到 4%。"
+                "检索评测维护 1200 条问答集，Recall@5 从 0.61 到 0.79，nDCG@10 同步上报。\n"
+                "玄武语料 | NLP 助理 | 2020.07-2021.02\n"
+                "做标注与基础向量检索实验。\n"
+                "技能：RAG、Embedding、向量数据库、文档解析、检索评测、OCR、Rerank、Milvus\n"
+                "5 年相关，近 4 年 RAG 生产落地。"
+            ),
+            name="纪南风",
+            years=5,
+            education="本科",
+            skills=["RAG", "Embedding", "向量数据库", "文档解析", "检索评测", "OCR", "Rerank", "Milvus"],
+            experiences=[
+                {
+                    "company": "秦淮智能",
+                    "title": "RAG 工程师",
+                    "years": 4.4,
+                    "bullets": ["Milvus RAG 链路", "Recall@5 0.61→0.79"],
+                },
+                {
+                    "company": "玄武语料",
+                    "title": "NLP 助理",
+                    "years": 0.7,
+                    "bullets": ["标注与向量检索实验"],
+                },
+            ],
+            projects=[{"name": "企业知识 RAG", "bullets": ["垃圾切片 18%→4%", "1200 条评测集"]}],
+            label="good",
+            hard_gate_pass=True,
+            expected_decision="recommend",
+            score_min=86,
+            score_max=100,
+            match_reasons=["必备技能均有量化证据", "解析/向量库/评测闭环完整"],
+            penalty_reasons=[],
+            quotes=[
+                "搭建企业知识 RAG：PDF/HTML 解析、语义切片、Embedding 写入 Milvus，生成侧走内部网关。",
+                "检索评测维护 1200 条问答集，Recall@5 从 0.61 到 0.79，nDCG@10 同步上报。",
+            ],
+        ),
+        resume(
+            resume_id="CV_052",
+            raw_text=(
+                "姓名：欧阳修竹\n"
+                "求职意向：检索增强应用\n"
+                "教育经历：钟山研究院 人工智能 硕士 2018-2021\n"
+                "工作经历：\n"
+                "栖霞语料 | 智能检索 | 2021.07-至今\n"
+                "做检索增强生成（即 RAG）客服助手：先召回再生成，禁止裸模型答制度问题。"
+                "句向量/文本向量（Embedding）选型对比过 bge 与 m3e，最终用 bge-m3。"
+                "向量库采用 FAISS 内存索引 + 定期落盘（团队也称「向量数据库」）。"
+                "文档解析覆盖合同 PDF 与网页正文清洗；检索评测看 Recall@K 与人工胜率。\n"
+                "技能：检索增强生成、句向量、FAISS、PDF 解析、Recall@K、LlamaIndex、混合检索\n"
+                "同义改写样本：检索增强生成/句向量/FAISS/Recall@K 对应 RAG/Embedding/向量数据库/检索评测。"
+            ),
+            name="欧阳修竹",
+            years=4,
+            education="硕士",
+            skills=["检索增强生成", "句向量", "FAISS", "PDF 解析", "Recall@K", "LlamaIndex", "混合检索"],
+            experiences=[
+                {
+                    "company": "栖霞语料",
+                    "title": "智能检索",
+                    "years": 4.1,
+                    "bullets": ["RAG 客服助手", "bge-m3 句向量", "FAISS 索引"],
+                }
+            ],
+            projects=[{"name": "制度问答助手", "bullets": ["禁止裸模型答制度问题"]}],
+            label="good",
+            hard_gate_pass=True,
+            expected_decision="recommend",
+            score_min=81,
+            score_max=95,
+            match_reasons=["同义改写应对应全部必备技能", "有模型选型与评测口径"],
+            penalty_reasons=["技能主键多用中文别名，需同义识别"],
+            quotes=[
+                "做检索增强生成（即 RAG）客服助手：先召回再生成，禁止裸模型答制度问题。",
+                "句向量/文本向量（Embedding）选型对比过 bge 与 m3e，最终用 bge-m3。",
+            ],
+        ),
+        resume(
+            resume_id="CV_053",
+            raw_text=(
+                "姓名：常青藤\n"
+                "求职意向：RAG / NLP 工程师\n"
+                "教育经历：雨花大学 计算机 本科 2014-2018\n"
+                "工作经历：\n"
+                "江宁知识 | 资深 NLP | 2018.07-至今\n"
+                "8 年搜索与 NLP。近四年把关键词搜索升级为 RAG：多路召回 + Embedding + Rerank。"
+                "向量数据库从 FAISS 迁到 Milvus 集群，日更新 80 万切片。"
+                "文档解析含 OCR 与版面分析；检索评测平台化，周报 nDCG。\n"
+                "项目：法规库问答，人工采纳率 74%。LlamaIndex 仅作实验对照，生产自研。\n"
+                "技能：RAG、Embedding、向量数据库、文档解析、检索评测、Rerank、OCR、Milvus"
+            ),
+            name="常青藤",
+            years=8,
+            education="本科",
+            skills=["RAG", "Embedding", "向量数据库", "文档解析", "检索评测", "Rerank", "OCR", "Milvus"],
+            experiences=[
+                {
+                    "company": "江宁知识",
+                    "title": "资深 NLP",
+                    "years": 8.1,
+                    "bullets": ["关键词搜索升级 RAG", "Milvus 日更 80 万切片"],
+                }
+            ],
+            projects=[{"name": "法规库问答", "bullets": ["人工采纳率 74%", "评测周报 nDCG"]}],
+            label="good",
+            hard_gate_pass=True,
+            expected_decision="recommend",
+            score_min=88,
+            score_max=100,
+            match_reasons=["年限与规模最大，多路召回/Rerank/OCR 加分项齐全"],
+            penalty_reasons=[],
+            quotes=[
+                "近四年把关键词搜索升级为 RAG：多路召回 + Embedding + Rerank。",
+                "向量数据库从 FAISS 迁到 Milvus 集群，日更新 80 万切片。",
+            ],
+        ),
+        resume(
+            resume_id="CV_054",
+            raw_text=(
+                "姓名：褚思远\n"
+                "求职意向：RAG 工程师\n"
+                "教育经历：建邺学院 软件工程 本科 2019-2023\n"
+                "工作经历：\n"
+                "鼓楼对话 | 对话应用 | 2023.07-至今（3 年）\n"
+                "主要做 FAQ 机器人，把文档整段塞进提示词，自称 RAG。"
+                "Embedding 调用过云 API，没有自建索引更新。"
+                "向量数据库用过一份 FAISS npy 文件，不会增量。"
+                "文档解析=复制粘贴到飞书；检索评测只有产品口头说「还行」。\n"
+                "技能：RAG、Embedding、向量数据库、文档解析、检索评测、Prompt\n"
+                "刚满年限，名不副实的 RAG，灰区而非推荐。"
+            ),
+            name="褚思远",
+            years=3,
+            education="本科",
+            skills=["RAG", "Embedding", "向量数据库", "文档解析", "检索评测", "Prompt"],
+            experiences=[
+                {
+                    "company": "鼓楼对话",
+                    "title": "对话应用",
+                    "years": 3.0,
+                    "bullets": ["FAQ 整段塞提示词", "FAISS npy 无增量"],
+                }
+            ],
+            projects=[{"name": "FAQ 机器人", "bullets": ["评测靠口头「还行」"]}],
+            label="partial",
+            hard_gate_pass=True,
+            expected_decision="gray",
+            score_min=62,
+            score_max=71,
+            match_reasons=["年限学历达标，技能字段覆盖", "接触过 Embedding/FAISS"],
+            penalty_reasons=["把长上下文当 RAG", "无增量索引与正规评测"],
+            quotes=[
+                "主要做 FAQ 机器人，把文档整段塞进提示词，自称 RAG。",
+                "文档解析=复制粘贴到飞书；检索评测只有产品口头说「还行」。",
+            ],
+        ),
+        resume(
+            resume_id="CV_055",
+            raw_text=(
+                "姓名：闻人归晚\n"
+                "求职意向：NLP（训练转 RAG）\n"
+                "教育经历：浦口大学 电子信息 本科 2016-2020\n"
+                "工作经历：\n"
+                "栖霞训练营 | 算法工程师 | 2020.07-至今\n"
+                "4 年以分类/NER 微调为主。2025 年起跟做一个 RAG Demo："
+                "Embedding 用开源默认模型，向量数据库用同事搭的 Milvus，本人只写入几条。"
+                "文档解析未做过，检索评测只会看 loss。\n"
+                "技能：RAG、Embedding、向量数据库、文档解析、检索评测、PyTorch、NER\n"
+                "领域略偏训练，RAG 链路证据不足，灰区。"
+            ),
+            name="闻人归晚",
+            years=4,
+            education="本科",
+            skills=["RAG", "Embedding", "向量数据库", "文档解析", "检索评测", "PyTorch", "NER"],
+            experiences=[
+                {
+                    "company": "栖霞训练营",
+                    "title": "算法工程师",
+                    "years": 5.1,
+                    "bullets": ["分类/NER 微调", "RAG Demo 跟做"],
+                }
+            ],
+            projects=[{"name": "RAG Demo", "bullets": ["默认 Embedding", "评测看 loss"]}],
+            label="partial",
+            hard_gate_pass=True,
+            expected_decision="gray",
+            score_min=60,
+            score_max=68,
+            match_reasons=["年限学历达标，技能列表覆盖关键字", "有 NLP 训练背景"],
+            penalty_reasons=["主业微调，RAG 为跟做 Demo", "文档解析与检索评测几乎空白"],
+            quotes=[
+                "4 年以分类/NER 微调为主。2025 年起跟做一个 RAG Demo：",
+                "文档解析未做过，检索评测只会看 loss。",
+            ],
+        ),
+        resume(
+            resume_id="CV_056",
+            raw_text=(
+                "姓名：裴清和\n"
+                "求职意向：RAG / 搜索\n"
+                "教育经历：仙林大学 信息管理 硕士 2019-2022\n"
+                "工作经历：\n"
+                "六朝检索 | 搜索开发 | 2022.07-至今（3 年）\n"
+                "主业 Solr/Elasticsearch 关键词检索与同义词。"
+                "RAG 与 Embedding 停留在技术分享和一场 POC，未接管生产向量库。"
+                "文档解析会用 Tika 抽文本；检索评测沿用搜索的 CTR，不是 Recall@K。\n"
+                "技能：RAG、Embedding、向量数据库、文档解析、检索评测、Solr、Elasticsearch\n"
+                "传统搜索转 RAG，相关但深度不够，灰区。"
+            ),
+            name="裴清和",
+            years=3,
+            education="硕士",
+            skills=["RAG", "Embedding", "向量数据库", "文档解析", "检索评测", "Solr", "Elasticsearch"],
+            experiences=[
+                {
+                    "company": "六朝检索",
+                    "title": "搜索开发",
+                    "years": 3.0,
+                    "bullets": ["Solr/ES 关键词", "RAG 仅 POC"],
+                }
+            ],
+            projects=[{"name": "站点搜索", "bullets": ["CTR 评测，非 nDCG"]}],
+            label="partial",
+            hard_gate_pass=True,
+            expected_decision="gray",
+            score_min=61,
+            score_max=70,
+            match_reasons=["硕士 3 年，搜索相关，技能字段覆盖", "有文档抽取经验"],
+            penalty_reasons=["向量 RAG 非生产", "评测口径仍是搜索 CTR"],
+            quotes=[
+                "主业 Solr/Elasticsearch 关键词检索与同义词。",
+                "RAG 与 Embedding 停留在技术分享和一场 POC，未接管生产向量库。",
+            ],
+        ),
+        resume(
+            resume_id="CV_057",
+            raw_text=(
+                "姓名：苗一丁\n"
+                "求职意向：RAG 工程师\n"
+                "教育经历：江北大学 计算机 本科 2021-2025\n"
+                "工作经历：\n"
+                "燕子矶语料 | NLP 助理 | 2025.06-至今（约 1 年）\n"
+                "协助跑 Embedding 脚本、查看 Milvus 控制台、把 PDF 丢进解析队列。"
+                "检索评测只会按表格填数。未独立设计 RAG。\n"
+                "技能：RAG、Embedding、向量数据库、文档解析、检索评测\n"
+                "关键字齐但年限约 1 年，低于 3 年硬门槛。校园毕设不能折算年限。应 reject。"
+            ),
+            name="苗一丁",
+            years=1,
+            education="本科",
+            skills=["RAG", "Embedding", "向量数据库", "文档解析", "检索评测"],
+            experiences=[
+                {
+                    "company": "燕子矶语料",
+                    "title": "NLP 助理",
+                    "years": 1.0,
+                    "bullets": ["跑 Embedding 脚本", "填评测表"],
+                }
+            ],
+            projects=[{"name": "跟跑解析队列", "bullets": ["无独立设计"]}],
+            label="poor",
+            hard_gate_pass=False,
+            expected_decision="reject",
+            score_min=16,
+            score_max=43,
+            match_reasons=["本科，技能关键字在列"],
+            penalty_reasons=["年限约 1 年，不满足 min_years=3"],
+            quotes=[
+                "燕子矶语料 | NLP 助理 | 2025.06-至今（约 1 年）",
+                "关键字齐但年限约 1 年，低于 3 年硬门槛。",
+            ],
+        ),
+        resume(
+            resume_id="CV_058",
+            raw_text=(
+                "姓名：詹小满\n"
+                "求职意向：NLP / RAG\n"
+                "教育经历：浦口职业大学 大数据 大专 2016-2019\n"
+                "工作经历：\n"
+                "大厂知识库外包组 | RAG 开发 | 2019.08-至今（5 年+）\n"
+                "独立维护过切片、Embedding 更新与 Milvus 集合，做过 Recall 评测和 PDF 解析。"
+                "技能：RAG、Embedding、向量数据库、文档解析、检索评测、OCR\n"
+                "能力接近岗位，但学历为大专，不满足本科硬门槛。"
+                "专升本在读未毕业。教育门槛回归样本，应 reject。"
+            ),
+            name="詹小满",
+            years=5,
+            education="大专",
+            skills=["RAG", "Embedding", "向量数据库", "文档解析", "检索评测", "OCR"],
+            experiences=[
+                {
+                    "company": "大厂知识库外包组",
+                    "title": "RAG 开发",
+                    "years": 6.0,
+                    "bullets": ["Milvus 集合维护", "Recall 评测与 PDF 解析"],
+                }
+            ],
+            projects=[{"name": "客服知识 RAG", "bullets": ["独立更新索引"]}],
+            label="poor",
+            hard_gate_pass=False,
+            expected_decision="reject",
+            score_min=21,
+            score_max=49,
+            match_reasons=["年限与技能匹配"],
+            penalty_reasons=["学历大专，低于本科硬门槛"],
+            quotes=[
+                "教育经历：浦口职业大学 大数据 大专 2016-2019",
+                "学历为大专，不满足本科硬门槛。",
+            ],
+        ),
+        resume(
+            resume_id="CV_059",
+            raw_text=(
+                "姓名：司徒万山\n"
+                "求职意向：高级专家\n"
+                "教育经历：玄武商学院 市场营销 本科 2007-2011\n"
+                "工作经历：\n"
+                "流量增长部 | SEO 总监 | 2013.01-至今\n"
+                "13 年 SEO/SEM，带 20 人增长团队冲自然量。"
+                "会用站长工具和关键词报表，不搭建 RAG，不用 Embedding，不维护向量数据库，"
+                "不写文档解析作业，不做 Recall/nDCG 评测。"
+                "所谓「内容智能」是标题改写，不是检索增强。\n"
+                "技能：SEO、SEM、关键词、增长、内容运营、演讲\n"
+                "跨领域资深运营：资历高但方向与 NLP/RAG 完全不符，缺全部必备技能。"
+            ),
+            name="司徒万山",
+            years=13,
+            education="本科",
+            skills=["SEO", "SEM", "关键词", "增长", "内容运营", "演讲"],
+            experiences=[
+                {
+                    "company": "流量增长部",
+                    "title": "SEO 总监",
+                    "years": 12.6,
+                    "bullets": ["带 20 人冲自然量", "标题改写"],
+                }
+            ],
+            projects=[{"name": "季度流量战役", "bullets": ["非 RAG"]}],
+            label="poor",
+            hard_gate_pass=False,
+            expected_decision="reject",
+            score_min=3,
+            score_max=28,
+            match_reasons=["本科，资历看起来很高"],
+            penalty_reasons=["跨领域 SEO 运营，缺失全部 RAG 必备技能"],
+            quotes=[
+                "13 年 SEO/SEM，带 20 人增长团队冲自然量。",
+                "会用站长工具和关键词报表，不搭建 RAG，不用 Embedding，不维护向量数据库，不写文档解析作业，不做 Recall/nDCG 评测。",
+            ],
+        ),
+        resume(
+            resume_id="CV_060",
+            raw_text=(
+                "姓名：聂长风\n"
+                "求职意向：NLP / RAG 工程师\n"
+                "教育经历：本科\n"
+                "技能：RAG Embedding 向量数据库 文档解析 检索评测 Rerank OCR LlamaIndex 多路召回 湖仓一体 AGI\n"
+                "经历：精通所有名词；「建设过万亿级向量库」同时「正在学习什么是 embedding」。"
+                "项目职责整段粘贴 JD：搭建检索增强生成（RAG）链路：解析、切片、向量化、召回与生成。"
+                "无集合名、无切片策略、无评测集。另称「向量数据库就是 Excel 里一列数字」。\n"
+                "关键词堆砌、空洞且矛盾。确定性字段可能通过，应 reject。"
+            ),
+            name="聂长风",
+            years=4,
+            education="本科",
+            skills=["RAG", "Embedding", "向量数据库", "文档解析", "检索评测", "Rerank", "OCR"],
+            experiences=[{"company": "未具名", "title": "RAG 专家", "years": 4, "bullets": ["粘贴 JD"]}],
+            projects=[{"name": "万亿级向量库", "bullets": ["无集合名无评测集"]}],
+            label="poor",
+            hard_gate_pass=True,
+            expected_decision="reject",
+            score_min=0,
+            score_max=36,
+            match_reasons=["结构化字段齐"],
+            penalty_reasons=["关键词堆砌并复制 JD", "万亿级向量库与正在学习 embedding 矛盾"],
+            quotes=[
+                "经历：精通所有名词；「建设过万亿级向量库」同时「正在学习什么是 embedding」。",
+                "另称「向量数据库就是 Excel 里一列数字」。",
+            ],
+        ),
+    ]
+
+
+def build():
+    for job in (CASE_004_JOB, CASE_005_JOB, CASE_006_JOB):
+        check_job(job)
+
+    cases = [
+        {
+            "case_id": "CASE_004",
+            "job": CASE_004_JOB,
+            "resumes": case_004_resumes(),
+            "notes": (
+                "前端 React/TypeScript。反作弊：CV_032 同义改写 good；"
+                "CV_040 关键词堆砌；CV_039 跨领域 Java/Go 架构师。"
+                "硬门槛失败：CV_037 年限、CV_038 学历、CV_039 缺必备技能。"
+            ),
+        },
+        {
+            "case_id": "CASE_005",
+            "job": CASE_005_JOB,
+            "resumes": case_005_resumes(),
+            "notes": (
+                "全栈 Node.js/React。反作弊：CV_042 同义改写 good；"
+                "CV_050 关键词堆砌；CV_049 跨领域量化研究员。"
+                "硬门槛失败：CV_047 年限、CV_048 学历、CV_049 缺必备技能。"
+            ),
+        },
+        {
+            "case_id": "CASE_006",
+            "job": CASE_006_JOB,
+            "resumes": case_006_resumes(),
+            "notes": (
+                "NLP/RAG。反作弊：CV_052 同义改写 good；"
+                "CV_060 关键词堆砌；CV_059 跨领域 SEO 总监。"
+                "硬门槛失败：CV_057 年限、CV_058 学历、CV_059 缺必备技能。"
+            ),
+        },
+    ]
+
+    for case in cases:
+        labels = [r["ground_truth"]["label"] for r in case["resumes"]]
+        assert labels.count("good") == 3, case["case_id"]
+        assert labels.count("partial") == 3, case["case_id"]
+        assert labels.count("poor") == 4, case["case_id"]
+        assert len(case["resumes"]) == 10
+
+    return {
+        "version": "1.0",
+        "locale": "zh-CN",
+        "total_cases": 10,
+        "total_resumes": 100,
+        "batch": {"index": 2, "of": 3, "case_ids": ["CASE_004", "CASE_005", "CASE_006"]},
+        "scoring_ref": {
+            "formula": "score_total = 0.60 * score_llm + 0.40 * score_deterministic",
+            "thresholds": {
+                "recommend": 75,
+                "gray_zone_min": 60,
+                "reject_below": 60,
+            },
+        },
+        "cases": cases,
+    }
+
+
+def main():
+    doc = build()
+    out = Path(__file__).with_name("part2_case004_006.json")
+    out.write_text(json.dumps(doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"wrote {out} bytes={out.stat().st_size}")
+    for case in doc["cases"]:
+        print(case["case_id"], "job_len", len(case["job"]["raw_text"]))
+        for r in case["resumes"]:
+            gt = r["ground_truth"]
+            print(
+                f"  {r['resume_id']} {gt['label']:7} years={r['structured']['years_experience']:>4} "
+                f"edu={r['structured']['education']} gate={gt['hard_gate_pass']} "
+                f"raw={len(r['raw_text'])}"
+            )
+
+
+if __name__ == "__main__":
+    main()
