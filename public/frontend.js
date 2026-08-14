@@ -2451,7 +2451,7 @@ function buildScreeningReportMarkdown(snapshot) {
     }
     lines.push("");
   });
-  lines.push("---", "", "_由觅才智能筛选工作台自动生成_");
+  lines.push("---", "", "_由简历中台自动生成_");
   return lines.join("\n");
 }
 
@@ -2560,7 +2560,7 @@ function buildScreeningReportHtml(snapshot) {
       </div>
     </section>
     ${rows}
-    <footer>由觅才智能筛选工作台自动生成 · 可直接打印或另存为 PDF</footer>
+    <footer>由简历中台自动生成 · 可直接打印或另存为 PDF</footer>
   </main>
 </body>
 </html>`;
