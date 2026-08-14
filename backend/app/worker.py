@@ -234,8 +234,12 @@ class ScreeningWorker:
             if not job:
                 return {"status": "not_found", "processed_tasks": processed_tasks}
             if job["status"] in ("completed", "failed", "cancelled"):
-                if job["status"] in ("completed", "failed") and self._job_needs_rematch(job_id):
-                    self._recover_empty_completed_job(job_id)
+                if (
+                    job["status"] == "completed"
+                    and self._job_needs_rematch(job_id)
+                    and self._recover_empty_completed_job(job_id)
+                ):
+                    recovered = True
                     idle_rounds = 0
                     continue
                 return {
@@ -1180,7 +1184,7 @@ class ScreeningWorker:
             .execute()
             .data
         )
-        if not job or job["status"] not in ("completed", "failed", "queued", "processing"):
+        if not job or job["status"] not in ("completed", "queued", "processing"):
             return False
         if not self._job_needs_rematch(job_id):
             return False
