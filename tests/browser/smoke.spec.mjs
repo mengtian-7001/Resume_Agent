@@ -48,6 +48,65 @@ test("390px viewport has no document horizontal overflow", async ({ page }) => {
   await expect(page.locator("#start-screening")).toBeVisible();
 });
 
+test("live upload keeps selected files and clearly asks unauthenticated users to sign in", async ({ page }) => {
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.unroute("**/supabase-config.js");
+  await page.route("**/supabase-config.js", (route) =>
+    route.fulfill({
+      contentType: "application/javascript",
+      body: `window.SUPABASE_CONFIG = {
+        url: "https://example.supabase.co",
+        anonKey: "test-publishable-key",
+        workspaceId: "test-workspace",
+        allowAnonymousBootstrap: false
+      };`,
+    }),
+  );
+  await page.route("https://esm.sh/**", (route) =>
+    route.fulfill({
+      contentType: "application/javascript",
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: `
+        const emptyResult = { data: [], error: null };
+        function query() {
+          let proxy;
+          proxy = new Proxy({}, {
+            get(_target, key) {
+              if (key === "then") return (resolve, reject) => Promise.resolve(emptyResult).then(resolve, reject);
+              return () => proxy;
+            }
+          });
+          return proxy;
+        }
+        export function createClient() {
+          return {
+            auth: {
+              getUser: async () => ({ data: { user: null } }),
+              getSession: async () => ({ data: { session: null }, error: null })
+            },
+            from: () => query(),
+            rpc: async () => emptyResult,
+            storage: { from: () => ({}) }
+          };
+        }
+      `,
+    }),
+  );
+
+  await page.goto("/index.html");
+  await page.locator('[data-view="upload"]').click();
+  await page.locator("#jd-sample-chips .sample-chip").first().click();
+  await page.locator("#resume-sample-chips .sample-chip").first().click();
+  await page.getByRole("button", { name: "一键解析 →" }).click();
+
+  await expect(page.locator("#jd-file .file")).toBeVisible();
+  await expect(page.locator("#resume-files .file")).toBeVisible();
+  await expect(page.locator(".upload-side > p")).toContainText("登录工作区账号");
+  await expect(page.locator("#toast")).toContainText("登录工作区账号");
+  expect(errors).toEqual([]);
+});
+
 test("interview workspace records and restores candidate answers and scores", async ({ page }) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));

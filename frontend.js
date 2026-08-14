@@ -196,6 +196,10 @@ function wireUpload(supabase) {
     try {
       if (!selected.jd) throw new Error("请先选择 1 份 JD。");
       if (selected.resumes.length < 1) throw new Error("请至少选择 1 份候选人简历。");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("请先点击右上角“登录工作区账号”，使用工作区成员邮箱登录。");
+      }
       startButton.disabled = true;
       startButton.textContent = "正在解析…";
       resetParseMeterState();
@@ -207,14 +211,13 @@ function wireUpload(supabase) {
           size_bytes: file.size,
         })),
       ];
-      window.showView?.("upload");
       showSubmittedPanel(
         { title: selected.jd.name.replace(/\.[^.]+$/, ""), status: "uploading" },
         previewDocs,
       );
       updateParseMeter({ upload: "processing" }, { status: "uploading" });
       beginSyntheticParseProgress();
-      const jobId = await startScreening(supabase);
+      const jobId = await startScreening(supabase, user);
       await runOneClickParse(jobId);
       startButton.textContent = "解析完成 ✓";
       followLiveJobId = null;
@@ -247,12 +250,12 @@ function wireUpload(supabase) {
   });
 }
 
-async function startScreening(supabase) {
+async function startScreening(supabase, authenticatedUser = null) {
   if (!selected.jd) throw new Error("请先选择 1 份 JD。");
   if (selected.resumes.length < 1) throw new Error("请至少选择 1 份候选人简历。");
   if (selected.resumes.length > 20) throw new Error("单次最多上传 20 份简历。");
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = authenticatedUser || (await supabase.auth.getUser()).data.user;
   if (!user) throw new Error("请先通过 Supabase Auth 登录后再上传文件。");
 
   const { data: job, error: jobError } = await supabase
@@ -1331,7 +1334,9 @@ function setParseStep(step, status) {
 }
 
 function showUploadError(message) {
-  if (statusNode) statusNode.textContent = `上传失败：${message}`;
+  const detail = `上传失败：${message}`;
+  if (statusNode) statusNode.textContent = detail;
+  notifyUi(detail);
 }
 
 function greetingForNow(date = new Date()) {
