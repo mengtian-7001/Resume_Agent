@@ -757,15 +757,30 @@ async function refreshRecentJobsHint(supabase) {
 async function loadResults(supabase, jobId) {
   const list = document.getElementById("result-list");
   try {
-    const [{ data: matches, error: matchError }, { data: profiles }, packsResult, jobResult] = await Promise.all([
+    const [{ data: matches, error: matchError }, { data: profiles }, packsResult, jobResult, requirementsResult] = await Promise.all([
       supabase.from("match_results").select("*").eq("screening_job_id", jobId).order("score", { ascending: false }),
       supabase.from("candidate_profiles").select("id,display_name,profile").eq("screening_job_id", jobId),
       supabase.from("question_packs").select("candidate_profile_id,questions,followups").eq("screening_job_id", jobId),
-      supabase.from("screening_jobs").select("id,title,status,created_at,candidate_count").eq("id", jobId).maybeSingle(),
+      supabase.from("screening_jobs").select("id,title,location,status,created_at,candidate_count").eq("id", jobId).maybeSingle(),
+      supabase.from("job_requirements").select("title,requirements,hard_gates").eq("screening_job_id", jobId).maybeSingle(),
     ]);
     if (matchError) throw matchError;
     const packs = packsResult?.data || [];
     const job = jobResult?.data || null;
+    const requirementRow = requirementsResult?.data || null;
+    const requirements = requirementRow?.requirements && typeof requirementRow.requirements === "object"
+      ? requirementRow.requirements
+      : {};
+    const jobDescription = {
+      title: requirementRow?.title || requirements.title || job?.title || "本次筛选岗位",
+      location: job?.location || "",
+      minYears: Number(requirements.min_years) || 0,
+      education: requirements.education || "",
+      mustHaveSkills: Array.isArray(requirements.must_have_skills) ? requirements.must_have_skills : [],
+      niceToHaveSkills: Array.isArray(requirements.nice_to_have_skills) ? requirements.nice_to_have_skills : [],
+      summary: requirements.summary || requirements.job_summary || "",
+      rawText: String(requirements.raw_text || "").slice(0, 4000),
+    };
     const byProfile = new Map((profiles || []).map((profile) => [profile.id, profile]));
     const byPack = new Map((packs || []).map((pack) => [pack.candidate_profile_id, pack]));
     if (!list) return;
@@ -846,6 +861,7 @@ async function loadResults(supabase, jobId) {
         candidateProfileId: match.candidate_profile_id,
         screeningJobId: jobId,
         jobTitle: job?.title || "",
+        jobDescription,
         skills,
         role: `${profile?.profile?.years_experience || 0} 年经验`,
         score: Math.round(Number(match.score) || 0),

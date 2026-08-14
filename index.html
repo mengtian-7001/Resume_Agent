@@ -173,6 +173,8 @@
     .candidate-verdict p{margin:6px 0 0;color:#555;font-size:12px;line-height:1.55}
     .candidate-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:14px}
     .candidate-actions .primary,.candidate-actions .outline{min-height:42px}
+    .candidate-context-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:14px}
+    .candidate-context-actions .outline{min-height:40px;background:#fff}
     .candidate-section-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin-top:28px}
     .candidate-panel{min-width:0;padding:22px;border:1px solid var(--line);border-radius:16px;background:#fff}
     .candidate-panel-wide{grid-column:1/-1}
@@ -185,6 +187,13 @@
     .candidate-question-grid .question-item{margin:0;min-height:88px}
     .candidate-followups{white-space:pre-line}
     .candidate-empty{margin:0;color:var(--muted);font-size:12px;line-height:1.6}
+    .info-dialog{width:min(720px,calc(100% - 36px));max-height:min(82dvh,780px);padding:0;border:0;border-radius:18px;background:#fff;box-shadow:0 24px 80px rgba(0,0,0,.2);color:var(--ink)}
+    .info-dialog::backdrop{background:rgba(0,0,0,.38);backdrop-filter:blur(3px)}
+    .info-dialog-header{position:sticky;top:0;z-index:1;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:22px 24px 18px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.94);backdrop-filter:blur(12px)}
+    .info-dialog-header p{margin:0 0 5px;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.info-dialog-header h2{margin:0;font-size:22px;letter-spacing:-.5px}
+    .info-dialog-close{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#f5f5f7;color:#333;font-size:19px}
+    .info-dialog-body{padding:22px 24px 28px}.info-summary{margin:0 0 18px;padding:15px 16px;border-radius:12px;background:#111;color:#fff;font-size:13px;line-height:1.65}
+    .info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.info-block{padding:16px;border:1px solid var(--line);border-radius:12px;min-width:0}.info-block-wide{grid-column:1/-1}.info-block h3{margin:0 0 9px;font-size:13px}.info-block p{margin:0;color:#555;font-size:12px;line-height:1.7;white-space:pre-line}.info-list{margin:0;padding-left:18px;color:#444;font-size:12px;line-height:1.75}.info-tags{display:flex;flex-wrap:wrap;gap:6px}.info-tags .tag{font-size:11px;padding:6px 8px}.jd-original{max-height:240px;overflow:auto;white-space:pre-wrap;word-break:break-word}
     .upload-recent{margin:18px 0 8px;padding-top:14px;border-top:1px solid #eceef0}
     .upload-recent-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
     .upload-recent-head strong{font-size:13px}
@@ -402,11 +411,13 @@
       .candidate-identity{gap:12px}.candidate-avatar{width:46px;height:46px;flex-basis:46px}
       .candidate-identity h1{font-size:28px}.candidate-role{font-size:12px}
       .candidate-verdict{grid-template-columns:auto 1fr;padding:16px}.candidate-score{width:62px;height:62px;font-size:22px}
+      .candidate-context-actions{display:grid;grid-template-columns:1fr 1fr}.candidate-context-actions .outline{width:100%;min-height:44px}
       .candidate-actions{position:sticky;bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:12;display:grid;grid-template-columns:1fr 1.35fr;padding:12px 0 7px;background:linear-gradient(180deg,rgba(255,255,255,0),#fff 28%)}
       .candidate-actions .primary,.candidate-actions .outline{width:100%;min-width:0;min-height:48px;padding-left:10px;padding-right:10px}
       .candidate-section-grid{grid-template-columns:1fr;gap:14px;margin-top:20px}
       .candidate-panel,.candidate-panel-wide{grid-column:1;padding:17px;border-radius:14px}
       .candidate-question-grid{grid-template-columns:1fr}
+      .info-dialog{width:100%;max-width:none;max-height:88dvh;margin:auto 0 0;border-radius:20px 20px 0 0}.info-dialog-header{padding:19px 18px 15px}.info-dialog-body{padding:18px 18px calc(26px + env(safe-area-inset-bottom,0px))}.info-grid{grid-template-columns:1fr}.info-block-wide{grid-column:1}
       .drawer{
         top:auto;bottom:0;left:0;right:0;width:100%;
         height:min(88dvh,780px);max-height:88dvh;
@@ -656,6 +667,10 @@
                 <div class="candidate-score" id="candidate-score">—</div>
                 <div><strong id="candidate-decision">等待选择候选人</strong><p id="candidate-summary">这里会集中展示筛选结论和判断依据。</p></div>
               </div>
+              <div class="candidate-context-actions">
+                <button class="outline" id="open-interview-brief">打开面试说明</button>
+                <button class="outline" id="open-jd-intro">打开 JD 介绍</button>
+              </div>
               <div class="candidate-actions">
                 <button class="outline" id="save-candidate">收藏候选人</button>
                 <button class="primary" id="open-interview-workspace">进入面试工作台</button>
@@ -722,6 +737,13 @@
       </div>
     </main>
   </div>
+  <dialog class="info-dialog" id="candidate-info-dialog" aria-labelledby="candidate-info-title">
+    <header class="info-dialog-header">
+      <div><p id="candidate-info-kicker">Candidate context</p><h2 id="candidate-info-title">说明</h2></div>
+      <form method="dialog"><button class="info-dialog-close" aria-label="关闭说明">×</button></form>
+    </header>
+    <div class="info-dialog-body" id="candidate-info-body"></div>
+  </dialog>
   <div class="toast" id="toast" role="status"></div>
   <script>
     const labels={dashboard:'工作台',upload:'发起筛选',results:'候选人','candidate-detail':'候选人详情',interview:'面试工作台',tasks:'任务记录',settings:'设置'};
@@ -756,7 +778,15 @@
     window.profiles=window.profiles||{};
     // Keep the built-in demo aligned with the production Agent contract:
     // every outcome receives >=10 structured questions and 3-5 follow-ups.
+    const demoJobDescription={
+      title:'AI Agent / LLM 应用工程师',location:'上海',minYears:3,education:'本科',
+      mustHaveSkills:['Python','LangChain','Function Calling','Multi-Agent','Prompt Engineering'],
+      niceToHaveSkills:['LangGraph','MCP','Agent 可观测性'],
+      summary:'负责企业级 AI Agent 与 LLM 应用的设计、开发、评测和生产落地，重点关注工具调用、复杂任务编排、稳定性与安全治理。',
+      rawText:'岗位职责：设计并落地 AI Agent / LLM 应用；构建工具调用、多 Agent 协作与评测体系；完善日志、追踪、降级和人工接管机制。\n任职要求：3 年及以上相关经验，本科及以上学历；熟练使用 Python，并具备 LangChain、Function Calling、Multi-Agent 与 Prompt Engineering 的真实项目经验。'
+    };
     Object.entries(window.profiles).forEach(([candidateName, profile])=>{
+      profile.jobDescription=profile.jobDescription||demoJobDescription;
       profile.questions=(profile.questions||[]).map((item,index)=>({
         ...item,
         id:item.id||`Q${String(index+1).padStart(2,'0')}`,
@@ -946,8 +976,73 @@
       window.renderRecruiterFeedback?.(name,p);
       show('candidate-detail');
     }
+    function addInfoBlock(root,title,values,{wide=false,tags=false,text=false}={}){
+      const block=document.createElement('section');block.className=`info-block${wide?' info-block-wide':''}`;
+      const heading=document.createElement('h3');heading.textContent=title;block.append(heading);
+      const items=(Array.isArray(values)?values:[values]).map(item=>String(item||'').trim()).filter(Boolean);
+      if(tags){
+        const wrap=document.createElement('div');wrap.className='info-tags';
+        items.forEach(item=>{const tag=document.createElement('span');tag.className='tag';tag.textContent=item;wrap.append(tag)});
+        if(!items.length){const empty=document.createElement('p');empty.textContent='暂无';wrap.append(empty)}
+        block.append(wrap);
+      }else if(text){
+        const paragraph=document.createElement('p');paragraph.textContent=items.join('\n')||'暂无';block.append(paragraph);
+      }else{
+        const list=document.createElement('ul');list.className='info-list';
+        (items.length?items:['暂无']).forEach(item=>{const li=document.createElement('li');li.textContent=item;list.append(li)});
+        block.append(list);
+      }
+      root.append(block);
+    }
+    function openCandidateInfo(kind){
+      const name=activeCandidateDetailName;
+      const p=(window.profiles||{})[name];if(!p)return;
+      const dialog=document.getElementById('candidate-info-dialog');
+      const body=document.getElementById('candidate-info-body');
+      const title=document.getElementById('candidate-info-title');
+      const kicker=document.getElementById('candidate-info-kicker');
+      clearNode(body);
+      const summary=document.createElement('p');summary.className='info-summary';
+      const grid=document.createElement('div');grid.className='info-grid';
+      if(kind==='interview'){
+        kicker.textContent='Interview brief';title.textContent=`${name} · 面试说明`;
+        summary.textContent=`${p.decision||'已完成分析'} · 匹配分 ${clampScore(p.score)} · 共 ${(p.questions||[]).length} 道专属面试题`;
+        body.append(summary,grid);
+        const auditIssues=(p.checkerAudit?.issues||[]).map(item=>item.note||item.issue_type||'').filter(Boolean);
+        const focus=[...(p.risks||[]),...auditIssues].filter(Boolean);
+        const evidence=(p.quotes||[]).slice(0,4).map(item=>typeof item==='object'?(item.quote||item.text||''):String(item)).filter(Boolean);
+        const followups=(p.followups||[]).slice(0,5).map(item=>item.question||item).filter(Boolean);
+        addInfoBlock(grid,'面试目标',p.summary||'核验候选人与岗位关键要求的真实匹配度。',{wide:true,text:true});
+        addInfoBlock(grid,'重点核验',focus.length?focus:['核验关键项目中候选人的个人职责、技术边界和量化结果。']);
+        addInfoBlock(grid,'证据提示',evidence.length?evidence:['请要求候选人补充可验证的项目证据。']);
+        addInfoBlock(grid,'建议追问',followups.length?followups:['围绕关键成果补充数据口径与个人贡献。'],{wide:true});
+        addInfoBlock(grid,'推荐面试流程',['先确认硬门槛与履历时间线','围绕关键证据深挖个人贡献','使用专属面试题验证技术深度','记录回答并逐题评分'],{wide:true});
+      }else{
+        const jd=p.jobDescription||{};
+        const jobTitle=jd.title||p.jobTitle||'本次筛选岗位';
+        kicker.textContent='Job description';title.textContent='JD 介绍';
+        summary.textContent=[jobTitle,jd.location].filter(Boolean).join(' · ')||'本次筛选岗位';
+        body.append(summary,grid);
+        const basics=[];
+        if(jd.minYears)basics.push(`${jd.minYears} 年及以上相关经验`);
+        if(jd.education)basics.push(`${jd.education}及以上学历`);
+        addInfoBlock(grid,'岗位简介',jd.summary||`本次候选人基于「${jobTitle}」的岗位要求完成匹配分析。`,{wide:true,text:true});
+        addInfoBlock(grid,'基本要求',basics.length?basics:['以解析后的硬门槛为准']);
+        addInfoBlock(grid,'必备技能',jd.mustHaveSkills||[],{tags:true});
+        addInfoBlock(grid,'加分技能',jd.niceToHaveSkills||[],{wide:true,tags:true});
+        if(jd.rawText){
+          addInfoBlock(grid,'JD 原文摘要',String(jd.rawText).slice(0,2400),{wide:true,text:true});
+          grid.lastElementChild?.querySelector('p')?.classList.add('jd-original');
+        }
+      }
+      if(dialog.open)dialog.close();
+      if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');
+    }
     function notify(message){toast.textContent=message;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2200)}
     window.notify=notify;
+    document.getElementById('open-interview-brief').addEventListener('click',()=>openCandidateInfo('interview'));
+    document.getElementById('open-jd-intro').addEventListener('click',()=>openCandidateInfo('jd'));
+    document.getElementById('candidate-info-dialog').addEventListener('click',event=>{if(event.target===event.currentTarget)event.currentTarget.close()});
     document.getElementById('save-candidate').addEventListener('click',()=>notify('已收藏该候选人（前端演示）'));
     document.getElementById('open-interview-workspace').addEventListener('click',()=>{
       if(activeCandidateDetailName)window.openInterviewWorkspace?.(activeCandidateDetailName);

@@ -28,6 +28,15 @@ test("demo runs one-click flow and opens a standalone candidate analysis page", 
   await expect(page.locator("#candidate-name")).toHaveText("林知远");
   await expect(page.locator("#candidate-checker")).toContainText("结论：");
   await expect(page.locator("#candidate-questions .question-item")).toHaveCount(10);
+  await page.getByRole("button", { name: "打开面试说明" }).click();
+  await expect(page.locator("#candidate-info-dialog")).toBeVisible();
+  await expect(page.locator("#candidate-info-title")).toContainText("面试说明");
+  await expect(page.locator("#candidate-info-body")).toContainText("推荐面试流程");
+  await page.getByRole("button", { name: "关闭说明" }).click();
+  await page.getByRole("button", { name: "打开 JD 介绍" }).click();
+  await expect(page.locator("#candidate-info-title")).toHaveText("JD 介绍");
+  await expect(page.locator("#candidate-info-body")).toContainText("必备技能");
+  await page.getByRole("button", { name: "关闭说明" }).click();
   const followupCount = await page.locator("#candidate-followups").evaluate((node) =>
     node.textContent.split("\n").filter(Boolean).length,
   );
