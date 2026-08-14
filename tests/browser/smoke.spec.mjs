@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
   );
 });
 
-test("demo runs one-click JD-plus-resumes flow and opens a candidate", async ({ page }) => {
+test("demo runs one-click flow and opens a standalone candidate analysis page", async ({ page }) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/index.html");
@@ -22,16 +22,19 @@ test("demo runs one-click JD-plus-resumes flow and opens a candidate", async ({ 
   await expect(page.locator("#start-screening")).toHaveText("运行真实样例 →");
   await page.getByRole("button", { name: "查看示例结果" }).click();
   await expect(page.locator("#results")).toHaveClass(/active/);
-  await expect(page.locator(".detail").first()).toBeVisible();
-  await page.locator(".detail").first().click();
-  await expect(page.locator("#candidate-drawer")).toHaveClass(/open/);
-  await expect(page.locator("#drawer-checker")).toContainText("结论：");
-  await expect(page.locator("#drawer-questions .question-item")).toHaveCount(10);
-  const followupCount = await page.locator("#drawer-question").evaluate((node) =>
+  await expect(page.locator(".person-card").first()).toBeVisible();
+  await page.locator(".person-card").first().click();
+  await expect(page.locator("#candidate-detail")).toHaveClass(/active/);
+  await expect(page.locator("#candidate-name")).toHaveText("林知远");
+  await expect(page.locator("#candidate-checker")).toContainText("结论：");
+  await expect(page.locator("#candidate-questions .question-item")).toHaveCount(10);
+  const followupCount = await page.locator("#candidate-followups").evaluate((node) =>
     node.textContent.split("\n").filter(Boolean).length,
   );
   expect(followupCount).toBeGreaterThanOrEqual(3);
   expect(followupCount).toBeLessThanOrEqual(5);
+  await page.getByRole("button", { name: "返回候选人列表" }).click();
+  await expect(page.locator("#results")).toHaveClass(/active/);
   expect(errors).toEqual([]);
 });
 
@@ -183,7 +186,8 @@ test("interview workspace records and restores candidate answers and scores", as
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/index.html");
   await page.locator('[data-view="results"]').click();
-  await page.locator(".detail").first().click();
+  await page.locator(".person-card").first().click();
+  await expect(page.locator("#candidate-detail")).toHaveClass(/active/);
   await page.getByRole("button", { name: "进入面试工作台" }).click();
   await expect(page.locator("#interview")).toHaveClass(/active/);
   await expect(page.locator("#interview-candidate-meta")).toContainText("林知远");

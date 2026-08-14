@@ -56,7 +56,7 @@ async function persistFeedback(profile, type, value) {
 }
 
 export function renderRecruiterFeedback(name, profile = {}) {
-  const root = document.getElementById("drawer-feedback");
+  const root = document.getElementById("candidate-feedback");
   if (!root) return;
   const state = loadLocal({ ...profile, name });
   root.replaceChildren();

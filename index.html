@@ -154,6 +154,36 @@
     .feedback-row span{font-size:12px;font-weight:700;min-width:72px}
     .feedback-row button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer}
     .feedback-row button.active{background:#111;color:#fff;border-color:#111}
+    .person-card{cursor:pointer}
+    .person-card:focus-visible{outline:2px solid #111;outline-offset:3px}
+    /* Standalone candidate analysis page. */
+    .candidate-back{display:inline-flex;align-items:center;gap:7px;margin:0 0 24px;padding:0;background:transparent;color:#555;font-size:12px;font-weight:700}
+    .candidate-back:hover{color:#111}
+    .candidate-detail-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(290px,.55fr);gap:30px;align-items:end;padding:0 0 30px;border-bottom:1px solid var(--line)}
+    .candidate-identity{display:flex;align-items:flex-start;gap:16px}
+    .candidate-avatar{width:56px;height:56px;flex:0 0 56px;border-radius:50%;display:grid;place-items:center;background:#f5f5f7;font-size:18px;font-weight:800}
+    .candidate-kicker{margin:0 0 7px;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+    .candidate-identity h1{margin:0;font-size:34px;letter-spacing:-1.4px}
+    .candidate-role{margin:7px 0 0;color:var(--muted);font-size:14px}
+    .candidate-hero-tags{margin:14px 0 0}
+    .candidate-verdict{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;padding:20px;background:#f5f5f7;border-radius:16px}
+    .candidate-score{width:74px;height:74px;border-radius:50%;display:grid;place-items:center;background:#111;color:#fff;font-size:25px;font-weight:850;font-variant-numeric:tabular-nums}
+    .candidate-verdict strong{display:block;font-size:16px}
+    .candidate-verdict p{margin:6px 0 0;color:#555;font-size:12px;line-height:1.55}
+    .candidate-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:14px}
+    .candidate-actions .primary,.candidate-actions .outline{min-height:42px}
+    .candidate-section-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin-top:28px}
+    .candidate-panel{min-width:0;padding:22px;border:1px solid var(--line);border-radius:16px;background:#fff}
+    .candidate-panel-wide{grid-column:1/-1}
+    .candidate-panel h2{margin:0 0 16px;font-size:15px}
+    .candidate-panel-intro{margin:-8px 0 18px;color:var(--muted);font-size:12px;line-height:1.55}
+    .candidate-panel .section-title{margin:20px 0 10px}
+    .candidate-panel .quote{margin:0 0 9px}
+    .candidate-panel .feedback-panel{margin-bottom:0}
+    .candidate-question-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .candidate-question-grid .question-item{margin:0;min-height:88px}
+    .candidate-followups{white-space:pre-line}
+    .candidate-empty{margin:0;color:var(--muted);font-size:12px;line-height:1.6}
     .upload-recent{margin:18px 0 8px;padding-top:14px;border-top:1px solid #eceef0}
     .upload-recent-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
     .upload-recent-head strong{font-size:13px}
@@ -366,6 +396,16 @@
       .settings-item dd{text-align:left}
       .settings-actions{flex-direction:column;align-items:stretch}
       .settings-actions .primary,.settings-actions .outline{width:100%;min-height:46px}
+      .candidate-back{margin-bottom:18px;min-height:40px}
+      .candidate-detail-hero{grid-template-columns:1fr;gap:20px;padding-bottom:22px}
+      .candidate-identity{gap:12px}.candidate-avatar{width:46px;height:46px;flex-basis:46px}
+      .candidate-identity h1{font-size:28px}.candidate-role{font-size:12px}
+      .candidate-verdict{grid-template-columns:auto 1fr;padding:16px}.candidate-score{width:62px;height:62px;font-size:22px}
+      .candidate-actions{position:sticky;bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:12;display:grid;grid-template-columns:1fr 1.35fr;padding:12px 0 7px;background:linear-gradient(180deg,rgba(255,255,255,0),#fff 28%)}
+      .candidate-actions .primary,.candidate-actions .outline{width:100%;min-width:0;min-height:48px;padding-left:10px;padding-right:10px}
+      .candidate-section-grid{grid-template-columns:1fr;gap:14px;margin-top:20px}
+      .candidate-panel,.candidate-panel-wide{grid-column:1;padding:17px;border-radius:14px}
+      .candidate-question-grid{grid-template-columns:1fr}
       .drawer{
         top:auto;bottom:0;left:0;right:0;width:100%;
         height:min(88dvh,780px);max-height:88dvh;
@@ -598,6 +638,40 @@
             <article class="person-card" data-kind="reject" data-name="孙博文"><div class="person-head"><div class="initial">孙</div><div><h3>孙博文</h3><p>AI 应用初级工程师 · 1 年</p></div><div class="ring" style="--score:32"><span>32</span></div></div><div class="tags"><span class="tag">Python</span><span class="tag">LangChain</span></div><div class="evidence"><strong>未通过硬门槛：</strong>相关工作年限约 1 年，低于岗位要求的 3 年。</div><div class="person-footer"><span class="badge reject">不匹配</span><button class="detail">查看分析 →</button></div></article>
           </div>
         </section>
+        <section class="view" id="candidate-detail" aria-label="候选人分析详情">
+          <button type="button" class="candidate-back" data-go="results">← 返回候选人列表</button>
+          <div class="candidate-detail-hero">
+            <div class="candidate-identity">
+              <div class="candidate-avatar" id="candidate-initial">候</div>
+              <div>
+                <p class="candidate-kicker">Candidate analysis</p>
+                <h1 id="candidate-name">候选人详情</h1>
+                <p class="candidate-role" id="candidate-role">从候选人列表选择一张卡片查看完整分析。</p>
+                <div class="tags candidate-hero-tags" id="candidate-skills"></div>
+              </div>
+            </div>
+            <div>
+              <div class="candidate-verdict">
+                <div class="candidate-score" id="candidate-score">—</div>
+                <div><strong id="candidate-decision">等待选择候选人</strong><p id="candidate-summary">这里会集中展示筛选结论和判断依据。</p></div>
+              </div>
+              <div class="candidate-actions">
+                <button class="outline" id="save-candidate">收藏候选人</button>
+                <button class="primary" id="open-interview-workspace">进入面试工作台</button>
+              </div>
+            </div>
+          </div>
+          <div class="candidate-section-grid">
+            <section class="candidate-panel"><h2>硬门槛校验</h2><p class="candidate-panel-intro">先确认岗位的强制条件是否满足。</p><div class="gates" id="candidate-gates"></div></section>
+            <section class="candidate-panel"><h2>匹配度拆解</h2><p class="candidate-panel-intro">查看各项评分，快速定位强项与短板。</p><div class="breakdown" id="candidate-breakdown"></div></section>
+            <section class="candidate-panel"><h2>关键证据</h2><p class="candidate-panel-intro">来自简历原文或分析过程中的可核验信息。</p><div id="candidate-quotes"></div></section>
+            <section class="candidate-panel"><h2>风险与改进建议</h2><p class="candidate-panel-intro">需要面试官进一步确认的薄弱点。</p><div id="candidate-risks"></div></section>
+            <section class="candidate-panel"><h2>AI 质检</h2><p class="candidate-panel-intro">复核评分依据、假设和可能影响结论的问题。</p><div id="candidate-checker"></div></section>
+            <section class="candidate-panel"><h2>招聘反馈</h2><p class="candidate-panel-intro">记录人工判断，用于后续优化筛选结果。</p><div class="feedback-panel" id="candidate-feedback"></div></section>
+            <section class="candidate-panel candidate-panel-wide"><h2>面试题</h2><p class="candidate-panel-intro" id="candidate-question-count">按候选人经历生成的专属问题。</p><div class="candidate-question-grid" id="candidate-questions"></div></section>
+            <section class="candidate-panel candidate-panel-wide"><h2>建议追问</h2><div class="interview-note candidate-followups" id="candidate-followups">暂无追问</div></section>
+          </div>
+        </section>
         <section class="view" id="interview">
           <div class="intro"><div><h1>面试工作台</h1><p>查看候选人的专属面试题，记录回答并逐题评分。内容会自动保存在当前浏览器中。</p></div></div>
           <div class="interview-shell">
@@ -647,40 +721,13 @@
       </div>
     </main>
   </div>
-  <div class="drawer-backdrop" id="drawer-backdrop"></div>
-  <aside class="drawer" id="candidate-drawer" aria-hidden="true" aria-label="候选人分析详情">
-    <header class="drawer-header">
-      <div class="initial" id="drawer-initial">林</div>
-      <div><h2 id="drawer-name">林知远</h2><p id="drawer-role">Agent 平台工程师 · 5 年经验</p></div>
-      <button class="drawer-close" id="drawer-close" aria-label="关闭详情">×</button>
-    </header>
-    <div class="drawer-body">
-      <div class="decision"><div class="score-large" id="drawer-score">92</div><div><strong id="drawer-decision">建议优先面试</strong><span id="drawer-summary">匹配度高，关键技能与生产落地证据完整。</span></div></div>
-      <h3 class="section-title">硬门槛校验</h3>
-      <div class="gates" id="drawer-gates"></div>
-      <h3 class="section-title">匹配度拆解</h3>
-      <div class="breakdown" id="drawer-breakdown"></div>
-      <h3 class="section-title">关键证据</h3>
-      <div id="drawer-quotes"></div>
-      <h3 class="section-title">招聘反馈</h3>
-      <div class="feedback-panel" id="drawer-feedback"></div>
-      <h3 class="section-title">风险与改进建议</h3>
-      <div id="drawer-risks"></div>
-      <h3 class="section-title">AI 质检</h3>
-      <div id="drawer-checker"></div>
-      <h3 class="section-title">面试题</h3>
-      <div id="drawer-questions"></div>
-      <h3 class="section-title">建议追问</h3>
-      <div class="interview-note" id="drawer-question"></div>
-      <div class="drawer-actions"><button class="outline" id="save-candidate">收藏候选人</button><button class="primary" id="open-interview-workspace">进入面试工作台</button></div>
-    </div>
-  </aside>
   <div class="toast" id="toast" role="status"></div>
   <script>
-    const labels={dashboard:'工作台',upload:'发起筛选',results:'候选人',interview:'面试工作台',tasks:'任务记录',settings:'设置'};
+    const labels={dashboard:'工作台',upload:'发起筛选',results:'候选人','candidate-detail':'候选人详情',interview:'面试工作台',tasks:'任务记录',settings:'设置'};
     function show(view){
       document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===view));
-      document.querySelectorAll('.nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+      const navView=view==='candidate-detail'?'results':view;
+      document.querySelectorAll('.nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===navView));
       document.getElementById('crumb').textContent=labels[view]||view;
       window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
       document.body.dataset.view=view;
@@ -770,25 +817,34 @@
         revised_decision:'review'
       }
     });
-    const drawer=document.getElementById('candidate-drawer'),backdrop=document.getElementById('drawer-backdrop'),toast=document.getElementById('toast');
+    const toast=document.getElementById('toast');
+    let activeCandidateDetailName='';
     function clearNode(node){while(node.firstChild)node.removeChild(node.firstChild)}
     function clampScore(value){
       const n=Number(value);
       if(!Number.isFinite(n)) return 0;
       return Math.max(0, Math.min(100, Math.round(n)));
     }
-    window.openDrawer=openDrawer;
-    function openDrawer(name){
+    window.openCandidateDetail=openCandidateDetail;
+    function openCandidateDetail(name){
       const p=(window.profiles||{})[name];if(!p)return;
-      document.getElementById('drawer-initial').textContent=String(name||'?').slice(0,1);
-      document.getElementById('drawer-name').textContent=name||'';
-      document.getElementById('drawer-role').textContent=p.role||'';
+      activeCandidateDetailName=name;
+      document.getElementById('candidate-initial').textContent=String(name||'?').slice(0,1);
+      document.getElementById('candidate-name').textContent=name||'';
+      document.getElementById('candidate-role').textContent=p.role||'候选人';
       const score=clampScore(p.score);
-      document.getElementById('drawer-score').textContent=String(score);
-      document.getElementById('drawer-decision').textContent=p.decision||'';
-      document.getElementById('drawer-summary').textContent=p.summary||'';
+      document.getElementById('candidate-score').textContent=String(score);
+      document.getElementById('candidate-decision').textContent=p.decision||'已完成分析';
+      document.getElementById('candidate-summary').textContent=p.summary||'暂无筛选摘要。';
 
-      const gatesNode=document.getElementById('drawer-gates');
+      const skillsNode=document.getElementById('candidate-skills');
+      clearNode(skillsNode);
+      const cardSkills=[...document.querySelectorAll('#result-list .person-card')]
+        .find(card=>card.dataset.name===name)?.querySelectorAll('.tag')||[];
+      const skills=(p.skills&&p.skills.length?p.skills:[...cardSkills].map(node=>node.textContent)).slice(0,8);
+      skills.forEach(skill=>{const tag=document.createElement('span');tag.className='tag';tag.textContent=String(skill);skillsNode.append(tag)});
+
+      const gatesNode=document.getElementById('candidate-gates');
       clearNode(gatesNode);
       (p.gates||[]).forEach(g=>{
         const row=document.createElement('div');row.className='gate';
@@ -800,7 +856,7 @@
         row.append(label,badge);gatesNode.append(row);
       });
 
-      const breakdownNode=document.getElementById('drawer-breakdown');
+      const breakdownNode=document.getElementById('candidate-breakdown');
       clearNode(breakdownNode);
       (p.scores||[]).forEach(s=>{
         const width=clampScore(s[1]);
@@ -813,7 +869,7 @@
         row.append(nameEl,bar,val);breakdownNode.append(row);
       });
 
-      const quotesNode=document.getElementById('drawer-quotes');
+      const quotesNode=document.getElementById('candidate-quotes');
       clearNode(quotesNode);
       (p.quotes||[]).forEach(q=>{
         const quote=document.createElement('div');quote.className='quote';
@@ -829,7 +885,7 @@
         quotesNode.append(quote);
       });
 
-      const risksNode=document.getElementById('drawer-risks');
+      const risksNode=document.getElementById('candidate-risks');
       clearNode(risksNode);
       const risks=p.risks||[];
       if(!risks.length){
@@ -842,7 +898,7 @@
         });
       }
 
-      const checkerNode=document.getElementById('drawer-checker');
+      const checkerNode=document.getElementById('candidate-checker');
       clearNode(checkerNode);
       const audit=p.checkerAudit||{};
       const checkerSummary=document.createElement('div');
@@ -862,7 +918,7 @@
       if(audit.revised_decision)addCheckerItem('修正后结论',String(audit.revised_decision));
 
       const exam=p.questions&&p.questions.length?p.questions:(p.question?[p.question]:[]);
-      const examNode=document.getElementById('drawer-questions');
+      const examNode=document.getElementById('candidate-questions');
       clearNode(examNode);
       if(!exam.length){
         const empty=document.createElement('div');empty.className='question-item';empty.textContent='暂无面试题';
@@ -878,24 +934,25 @@
           item.append(small,body);examNode.append(item);
         });
       }
+      document.getElementById('candidate-question-count').textContent=exam.length
+        ?`共 ${exam.length} 道专属面试题，可进入面试工作台逐题记录与评分。`
+        :'当前候选人暂无专属面试题。';
 
       const follow=p.followups&&p.followups.length
-        ?p.followups.map(item=>item.question||item).join('\n')
+        ?p.followups.map((item,index)=>`${index+1}. ${item.question||item}`).join('\n')
         :(p.question||'');
-      document.getElementById('drawer-question').textContent=follow||'暂无追问';
-      drawer.classList.add('open');backdrop.classList.add('open');drawer.setAttribute('aria-hidden','false');
+      document.getElementById('candidate-followups').textContent=follow||'暂无追问';
       window.renderRecruiterFeedback?.(name,p);
+      show('candidate-detail');
     }
-    function closeDrawer(){drawer.classList.remove('open');backdrop.classList.remove('open');drawer.setAttribute('aria-hidden','true')}
-    document.querySelectorAll('.detail').forEach(button=>button.addEventListener('click',()=>openDrawer(button.closest('.person-card').dataset.name)));
-    document.getElementById('drawer-close').addEventListener('click',closeDrawer);backdrop.addEventListener('click',closeDrawer);document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
     function notify(message){toast.textContent=message;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2200)}
     window.notify=notify;
     document.getElementById('save-candidate').addEventListener('click',()=>notify('已收藏该候选人（前端演示）'));
     document.getElementById('open-interview-workspace').addEventListener('click',()=>{
-      const name=document.getElementById('drawer-name').textContent;
-      closeDrawer();
-      window.openInterviewWorkspace?.(name);
+      if(activeCandidateDetailName)window.openInterviewWorkspace?.(activeCandidateDetailName);
+    });
+    window.addEventListener('profilesupdated',()=>{
+      if(document.body.dataset.view==='candidate-detail'&&activeCandidateDetailName)openCandidateDetail(activeCandidateDetailName);
     });
   </script>
   <script src="supabase-config.js"></script>

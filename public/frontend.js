@@ -39,10 +39,35 @@ const selectedSampleIds = { jd: null, resumes: new Set() };
 wireScreeningConfigButtons();
 initSamplePickers();
 
+prepareCandidateCards();
+
+function prepareCandidateCards() {
+  document.querySelectorAll("#result-list .person-card").forEach((card) => {
+    const name = card.dataset.name || "候选人";
+    card.tabIndex = 0;
+    card.setAttribute("role", "link");
+    card.setAttribute("aria-label", `查看 ${name} 的完整分析`);
+    const detailButton = card.querySelector("button.detail");
+    if (detailButton) {
+      const label = document.createElement("span");
+      label.className = "detail";
+      label.setAttribute("aria-hidden", "true");
+      label.textContent = "打开详情 →";
+      detailButton.replaceWith(label);
+    }
+  });
+}
+
 document.getElementById("result-list").addEventListener("click", (event) => {
-  const button = event.target.closest(".detail");
-  const card = button?.closest(".person-card");
-  if (card) window.openDrawer?.(card.dataset.name);
+  const card = event.target.closest(".person-card");
+  if (card) window.openCandidateDetail?.(card.dataset.name);
+});
+
+document.getElementById("result-list").addEventListener("keydown", (event) => {
+  const card = event.target.closest(".person-card");
+  if (!card || !["Enter", " "].includes(event.key)) return;
+  event.preventDefault();
+  window.openCandidateDetail?.(card.dataset.name);
 });
 
 if (!config?.url || !config?.anonKey || !config?.workspaceId) {
@@ -884,7 +909,7 @@ async function loadResults(supabase, jobId) {
         .filter(Boolean);
       const auditIssue = breakdown.checker_audit?.issues?.[0];
       const attention = auditIssue?.note || risks[0] || "";
-      return `<article class="person-card" data-kind="${escapeHtml(kind)}" data-name="${escapeHtml(name)}">
+      return `<article class="person-card" data-kind="${escapeHtml(kind)}" data-name="${escapeHtml(name)}" role="link" tabindex="0" aria-label="查看 ${escapeHtml(name)} 的完整分析">
       <div class="person-head"><div class="initial">${escapeHtml(name.slice(0, 1))}</div><div><h3>${escapeHtml(name)}</h3><p>${profile?.profile?.years_experience || 0} 年经验</p></div><div class="ring" style="--score:${Number(match.score) || 0}"><span>${Math.round(Number(match.score) || 0)}</span></div></div>
       <div class="tags">${skills.map((skill) => `<span class="tag">${escapeHtml(skill)}</span>`).join("")}</div>
       <div class="decision-facts">
@@ -895,7 +920,7 @@ async function loadResults(supabase, jobId) {
       <div class="evidence"><strong>匹配结果：</strong>${escapeHtml(evidence[0]?.text || "等待分析证据")}</div>
       ${attention ? `<div class="card-attention"><strong>${auditIssue ? `AI 质检 · ${escapeHtml(auditIssue.severity || "提示")}` : "风险提示"}：</strong>${escapeHtml(attention)}</div>` : ""}
       ${checkerDegraded ? '<div class="card-attention"><strong>质检状态：</strong>未通过/不可用，结果已标记为人工复核。</div>' : ""}
-      <div class="person-footer"><span class="badge ${escapeHtml(kind)}">${escapeHtml(label)}</span><span class="qcount">${questionCount ? `${questionCount} 道面试题` : "暂无面试题"}</span><button class="detail">查看分析 →</button></div>
+      <div class="person-footer"><span class="badge ${escapeHtml(kind)}">${escapeHtml(label)}</span><span class="qcount">${questionCount ? `${questionCount} 道面试题` : "暂无面试题"}</span><span class="detail" aria-hidden="true">打开详情 →</span></div>
     </article>`;
     }).join("");
   } catch (error) {
@@ -1757,7 +1782,7 @@ async function loadDashboard(supabase) {
       onOpen: async (jobId, name) => {
         if (!jobId) return;
         await openJob(supabase, jobId);
-        if (name) window.openDrawer?.(name);
+        if (name) window.openCandidateDetail?.(name);
       },
     });
 
