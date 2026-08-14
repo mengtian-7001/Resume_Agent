@@ -194,6 +194,7 @@
     .info-dialog-close{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:#f5f5f7;color:#333;font-size:19px}
     .info-dialog-body{padding:22px 24px 28px}.info-summary{margin:0 0 18px;padding:15px 16px;border-radius:12px;background:#111;color:#fff;font-size:13px;line-height:1.65}
     .info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.info-block{padding:16px;border:1px solid var(--line);border-radius:12px;min-width:0}.info-block-wide{grid-column:1/-1}.info-block h3{margin:0 0 9px;font-size:13px}.info-block p{margin:0;color:#555;font-size:12px;line-height:1.7;white-space:pre-line}.info-list{margin:0;padding-left:18px;color:#444;font-size:12px;line-height:1.75}.info-tags{display:flex;flex-wrap:wrap;gap:6px}.info-tags .tag{font-size:11px;padding:6px 8px}.jd-original{max-height:240px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+    .file-openable{margin:0 -8px;padding-left:8px;padding-right:8px;border-radius:9px;cursor:pointer;transition:background .16s ease}.file-openable:hover,.file-openable:focus-visible{background:#f7f7f8;outline:none}.file-actions{margin-left:auto;display:flex;align-items:center;gap:10px}.file-open{font-size:11px;font-weight:700;color:#111;white-space:nowrap}.file-remove{padding:6px 9px;border-radius:999px;background:#f1f1f3;color:#6e6e73;font-size:10px}.file-remove:hover{background:#e7e7ea;color:#111}.sample-preview-meta{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}.sample-preview-meta span{padding:6px 9px;border-radius:999px;background:#f5f5f7;color:#555;font-size:11px;font-weight:650}.sample-preview-document{border:1px solid var(--line);border-radius:14px;background:#fbfbfc;overflow:hidden}.sample-preview-document pre{margin:0;padding:20px;max-height:min(54dvh,520px);overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.85 ui-sans-serif,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif;color:#333}
     .upload-recent{margin:18px 0 8px;padding-top:14px;border-top:1px solid #eceef0}
     .upload-recent-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
     .upload-recent-head strong{font-size:13px}
@@ -418,6 +419,7 @@
       .candidate-panel,.candidate-panel-wide{grid-column:1;padding:17px;border-radius:14px}
       .candidate-question-grid{grid-template-columns:1fr}
       .info-dialog{width:100%;max-width:none;max-height:88dvh;margin:auto 0 0;border-radius:20px 20px 0 0}.info-dialog-header{padding:19px 18px 15px}.info-dialog-body{padding:18px 18px calc(26px + env(safe-area-inset-bottom,0px))}.info-grid{grid-template-columns:1fr}.info-block-wide{grid-column:1}
+      .file-openable{align-items:flex-start;flex-wrap:wrap}.file-name{min-width:0}.file-actions{width:100%;padding-left:38px;justify-content:space-between}.sample-preview-document pre{padding:16px;max-height:52dvh}
       .drawer{
         top:auto;bottom:0;left:0;right:0;width:100%;
         height:min(88dvh,780px);max-height:88dvh;
@@ -743,6 +745,13 @@
       <form method="dialog"><button class="info-dialog-close" aria-label="关闭说明">×</button></form>
     </header>
     <div class="info-dialog-body" id="candidate-info-body"></div>
+  </dialog>
+  <dialog class="info-dialog" id="sample-preview-dialog" aria-labelledby="sample-preview-title">
+    <header class="info-dialog-header">
+      <div><p id="sample-preview-kicker">文档预览</p><h2 id="sample-preview-title">文件内容</h2></div>
+      <form method="dialog"><button class="info-dialog-close" aria-label="关闭文件预览">×</button></form>
+    </header>
+    <div class="info-dialog-body" id="sample-preview-body"></div>
   </dialog>
   <div class="toast" id="toast" role="status"></div>
   <script>

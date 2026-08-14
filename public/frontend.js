@@ -37,6 +37,7 @@ let sampleManifest = null;
 const selectedSampleIds = { jd: null, resumes: new Set() };
 
 wireScreeningConfigButtons();
+wireSelectedDocumentPreviews();
 initSamplePickers();
 
 prepareCandidateCards();
@@ -388,16 +389,92 @@ function resetUploadLists() {
 function renderFiles() {
   const jdBox = document.getElementById("jd-file");
   const resumeBox = document.getElementById("resume-files");
-  if (selected.jd) jdBox.innerHTML = fileMarkup(selected.jd);
+  if (selected.jd) jdBox.innerHTML = fileMarkup(selected.jd, "jd", 0);
   else jdBox.innerHTML = '<p class="file-empty">尚未选择 JD 文件</p>';
-  if (selected.resumes.length) resumeBox.innerHTML = selected.resumes.map(fileMarkup).join("");
+  if (selected.resumes.length) resumeBox.innerHTML = selected.resumes.map((file, index) => fileMarkup(file, "resume", index)).join("");
   else resumeBox.innerHTML = '<p class="file-empty">尚未选择简历</p>';
 }
 
-function fileMarkup(file) {
+function fileMarkup(file, type, index) {
   const lower = file.name.toLowerCase();
   const ext = lower.endsWith(".docx") ? "DOCX" : lower.endsWith(".doc") ? "DOC" : "PDF";
-  return `<div class="file file-pending"><div class="filetype">${ext}</div><div class="file-name">${escapeHtml(file.name)}<span>${Math.ceil(file.size / 1024)} KB · 待提交</span></div></div>`;
+  const sample = selectedSampleForFile(type, file);
+  const sampleId = sample?.id || "";
+  return `<div class="file file-pending file-openable" role="button" tabindex="0" data-preview-type="${type}" data-file-index="${index}" data-sample-id="${escapeHtml(sampleId)}" aria-label="查看 ${escapeHtml(file.name)}">
+    <div class="filetype">${ext}</div>
+    <div class="file-name">${escapeHtml(file.name)}<span>${Math.ceil(file.size / 1024)} KB · 已选择</span></div>
+    <div class="file-actions"><span class="file-open">查看内容 →</span><button type="button" class="file-remove" aria-label="移除 ${escapeHtml(file.name)}">移除</button></div>
+  </div>`;
+}
+
+function selectedSampleForFile(type, file) {
+  if (!sampleManifest || !file) return null;
+  const pool = type === "jd" ? sampleManifest.jd : sampleManifest.resumes;
+  if (type === "jd") return pool.find((sample) => sample.id === selectedSampleIds.jd) || null;
+  return pool.find((sample) => selectedSampleIds.resumes.has(sample.id) && sample.filename === file.name) || null;
+}
+
+function wireSelectedDocumentPreviews() {
+  const dialog = document.getElementById("sample-preview-dialog");
+  dialog?.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+  ["jd-file", "resume-files"].forEach((id) => {
+    const box = document.getElementById(id);
+    if (!box) return;
+    box.addEventListener("click", (event) => {
+      const row = event.target.closest(".file-openable");
+      if (!row) return;
+      if (event.target.closest(".file-remove")) {
+        event.stopPropagation();
+        removeSelectedDocument(row.dataset.previewType, Number(row.dataset.fileIndex));
+        return;
+      }
+      openSelectedDocument(row.dataset.previewType, Number(row.dataset.fileIndex), row.dataset.sampleId);
+    });
+    box.addEventListener("keydown", (event) => {
+      const row = event.target.closest(".file-openable");
+      if (!row || event.target.closest(".file-remove") || !["Enter", " "].includes(event.key)) return;
+      event.preventDefault();
+      openSelectedDocument(row.dataset.previewType, Number(row.dataset.fileIndex), row.dataset.sampleId);
+    });
+  });
+}
+
+function removeSelectedDocument(type, index) {
+  if (type === "jd") {
+    selected.jd = null;
+    selectedSampleIds.jd = null;
+    if (jdInput) jdInput.value = "";
+  } else {
+    const [removed] = selected.resumes.splice(index, 1);
+    const sample = selectedSampleForFile("resume", removed);
+    if (sample) selectedSampleIds.resumes.delete(sample.id);
+  }
+  renderFiles();
+  renderSampleChips(type);
+}
+
+function openSelectedDocument(type, index, sampleId = "") {
+  const file = type === "jd" ? selected.jd : selected.resumes[index];
+  const pool = type === "jd" ? sampleManifest?.jd : sampleManifest?.resumes;
+  const sample = pool?.find((item) => item.id === sampleId) || selectedSampleForFile(type, file);
+  const dialog = document.getElementById("sample-preview-dialog");
+  if (!dialog || !file) return;
+  document.getElementById("sample-preview-kicker").textContent = type === "jd" ? "JD 文档" : "候选人简历";
+  document.getElementById("sample-preview-title").textContent = sample?.title || file.name.replace(/\.[^.]+$/, "");
+  const meta = [
+    type === "jd" ? "岗位说明" : "候选人资料",
+    sample ? sampleChipMeta(type, sample) : `${Math.ceil(file.size / 1024)} KB`,
+    sample ? "内置样例" : "本地文件",
+  ];
+  document.getElementById("sample-preview-body").innerHTML = `
+    <div class="sample-preview-meta">${meta.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>
+    <div class="sample-preview-document">
+      <pre>${escapeHtml(sample?.preview || "文件已选择。完成一键解析后，可在独立候选人页面查看结构化内容与完整分析。")}</pre>
+    </div>`;
+  if (typeof dialog.showModal === "function") dialog.showModal();
+  else dialog.setAttribute("open", "");
 }
 
 const jobStatusLabels = {
@@ -2295,6 +2372,11 @@ async function selectSample(type, sampleId) {
   const pool = type === "jd" ? sampleManifest.jd : sampleManifest.resumes;
   const sample = pool.find((item) => item.id === sampleId);
   if (!sample) return;
+  if (isSampleSelected(type, sampleId)) {
+    const index = type === "jd" ? 0 : selected.resumes.findIndex((file) => file.name === sample.filename);
+    openSelectedDocument(type, Math.max(index, 0), sampleId);
+    return;
+  }
   try {
     const response = await fetch(sample.path);
     if (!response.ok) throw new Error(`无法读取样例：${sample.title}`);
@@ -2309,15 +2391,9 @@ async function selectSample(type, sampleId) {
       selected.jd = file;
       selectedSampleIds.jd = sampleId;
     } else {
-      const index = selected.resumes.findIndex((resume) => resume.name === file.name);
-      if (index >= 0) {
-        selected.resumes.splice(index, 1);
-        selectedSampleIds.resumes.delete(sampleId);
-      } else {
-        if (selected.resumes.length >= 20) throw new Error("单次最多选择 20 份简历。");
-        selected.resumes.push(file);
-        selectedSampleIds.resumes.add(sampleId);
-      }
+      if (selected.resumes.length >= 20) throw new Error("单次最多选择 20 份简历。");
+      selected.resumes.push(file);
+      selectedSampleIds.resumes.add(sampleId);
     }
     renderFiles();
     renderSampleChips(type);

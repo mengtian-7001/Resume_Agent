@@ -60,6 +60,30 @@ test("390px viewport has no document horizontal overflow", async ({ page }) => {
   await expect(page.locator("#start-screening")).toBeVisible();
 });
 
+test("selected sample JD and resume can be opened without losing the selection", async ({ page }) => {
+  await page.goto("/index.html");
+  await page.locator('[data-view="upload"]').click();
+
+  const jdChip = page.locator("#jd-sample-chips .sample-chip").first();
+  const jdSampleId = await jdChip.getAttribute("data-sample-id");
+  await jdChip.click();
+  await expect(page.locator("#jd-file .file-openable")).toContainText("查看内容");
+  await page.locator(`#jd-sample-chips [data-sample-id="${jdSampleId}"]`).click();
+  await expect(page.locator("#sample-preview-dialog")).toBeVisible();
+  await expect(page.locator("#sample-preview-kicker")).toHaveText("JD 文档");
+  await expect(page.locator("#sample-preview-body")).toContainText("岗位名称");
+  await page.getByRole("button", { name: "关闭文件预览" }).click();
+  await expect(page.locator("#jd-file .file-openable")).toBeVisible();
+
+  await page.locator("#resume-sample-chips .sample-chip").first().click();
+  await page.locator("#resume-files .file-openable").first().click();
+  await expect(page.locator("#sample-preview-kicker")).toHaveText("候选人简历");
+  await expect(page.locator("#sample-preview-body")).toContainText("姓名：");
+  await page.getByRole("button", { name: "关闭文件预览" }).click();
+  await page.locator("#resume-files .file-remove").first().click();
+  await expect(page.locator("#resume-files .file-empty")).toBeVisible();
+});
+
 test("live upload keeps selected files and clearly asks unauthenticated users to sign in", async ({ page }) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));

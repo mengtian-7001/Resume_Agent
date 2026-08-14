@@ -7,7 +7,8 @@
       "path": "samples/jd-ai-agent-llm.docx",
       "tag": "Agent",
       "salary": "30-50K",
-      "city": "上海"
+      "city": "上海",
+      "preview": "【岗位名称】AI Agent / LLM 应用工程师\n【工作地点】上海（可接受每周 2 天远程）\n\n【岗位职责】\n1. 负责智能助手与内部 Copilot 的 Agent 编排，将业务系统以 Function Calling 接入大模型。\n2. 基于 LangChain 搭建 Multi-Agent 协作：任务拆解、记忆、重试与人工接管。\n3. 设计 Prompt Engineering 方案与评测回归，降低幻觉和工具误调用。\n4. 与后端协作完成 Agent 服务化，关注延迟、成本与 tracing。\n\n【任职要求】\n1. 本科及以上学历，3 年及以上 Python 开发经验。\n2. 熟悉 LangChain，能独立设计 Agent 工作流。\n3. 有 Function Calling / Tool Use 落地经验，能处理鉴权、幂等与失败重试。\n4. 有 Multi-Agent 协作或复杂任务编排经验。\n5. 能针对任务编写系统提示词与少样本示例。\n\n【加分项】LangGraph、FastAPI、MCP、Agent 评测体系。"
     },
     {
       "id": "jd-python-fastapi",
@@ -16,7 +17,8 @@
       "path": "samples/jd-python-fastapi.docx",
       "tag": "后端",
       "salary": "25-45K",
-      "city": "杭州"
+      "city": "杭州",
+      "preview": "【岗位名称】后端开发工程师（Python / FastAPI）\n【工作地点】杭州\n\n【岗位职责】\n1. 基于 FastAPI 设计并实现对外 HTTP API 与内部服务，保证接口契约稳定。\n2. 使用 PostgreSQL 进行建模、索引与事务设计，支撑核心业务写路径。\n3. 基于 Redis 实现缓存、分布式锁与限流，控制热点与超卖。\n4. 将服务容器化（Docker）并接入 CI，编写可回滚的发布方案。\n\n【任职要求】\n1. 本科及以上学历，3 年及以上 Python 后端经验。\n2. 熟练使用 FastAPI（或同等 ASGI 框架）及 Pydantic 数据校验。\n3. 熟悉 PostgreSQL：索引、锁、慢查询与迁移。\n4. 有 Redis 生产使用经验。\n5. 能独立编写 Dockerfile 与多环境配置。\n\n【加分项】Kubernetes、Celery、gRPC、OpenTelemetry、AWS。"
     },
     {
       "id": "jd-etl",
@@ -25,7 +27,8 @@
       "path": "samples/jd-etl.docx",
       "tag": "数据",
       "salary": "25-45K",
-      "city": "北京"
+      "city": "北京",
+      "preview": "【岗位名称】数据工程师（ETL / 数仓）\n【工作地点】北京\n\n【岗位职责】\n1. 负责业务库到数仓的 ETL，使用 Spark 完成日批与补数作业。\n2. 用 Airflow 编排依赖、告警与 SLA，保障早晨报表按时产出。\n3. 基于维度建模设计 ODS/DWD/DWS/ADS 分层，沉淀可复用指标。\n4. 用 SQL 与 Python 做质量校验：空值、主键冲突、波动监控。\n\n【任职要求】\n1. 本科及以上学历，3 年及以上数据开发经验。\n2. 精通 SQL，能独立完成复杂关联与窗口分析。\n3. 有 Spark（PySpark）生产作业经验，了解分区、shuffle 与倾斜处理。\n4. 熟悉 Airflow DAG 编写、重试与依赖管理。\n5. 具备数据建模能力，理解事实表与维度表。\n\n【加分项】dbt、Flink、Hive、Kafka、ClickHouse。"
     }
   ],
   "resumes": [
@@ -36,7 +39,8 @@
       "path": "samples/resume-cv_001.docx",
       "tag": "推荐",
       "salary": "30-45K",
-      "years": 5
+      "years": 5,
+      "preview": "姓名：林知远\n求职意向：AI Agent / LLM 应用工程师\n教育经历：东湖理工大学 计算机科学与技术 本科 2016-2020\n\n工作经历：\n澄空智能 | Agent 平台工程师 | 2021.03-至今\n主导设计工单处理 Multi-Agent：拆解、指派、工具调用与人工接管。使用 LangChain 与自研编排层对接 20+ 内部 API，统一 Function Calling 协议（鉴权、幂等、超时重试）。负责 Prompt Engineering 与评测集建设，将工具误调用率从 11% 降至 3.2%。\n\n拾光纪科技 | Python 后端工程师 | 2020.07-2021.03\n用 Python 维护客服中台接口与审计日志，为后续 Agent 化改造打底。\n\n项目：「澄助手」企业内部 Copilot，支持查库、提单、改权限，日均调用约 1.2 万次。多 Agent 协作编排器实现规划-执行-反思循环，支持并行工具调用。\n\n技能：Python、LangChain、Function Calling、Multi-Agent、Prompt Engineering、FastAPI、LangGraph\n合计 5 年 Python 开发，近 4 年专注 LLM 应用与 Agent 生产落地。"
     },
     {
       "id": "resume-cv_002",
@@ -45,7 +49,8 @@
       "path": "samples/resume-cv_002.docx",
       "tag": "推荐",
       "salary": "28-42K",
-      "years": 4
+      "years": 4,
+      "preview": "姓名：周启明\n求职意向：大模型应用开发\n教育经历：南港大学 软件工程 硕士 2018-2021；江宁学院 软件工程 本科 2014-2018\n\n工作经历：\n北纬实验室 | 智能体研发工程师 | 2022.01-至今\n基于大模型搭建客服中台多智能体：意图识别智能体、工具执行智能体与质检智能体协同。把业务接口封装成工具调用，含签名校验与失败补偿。用提示词工程维护系统提示词版本，按场景做少样本替换。\n\n问舟信息 | 后端开发 | 2021.07-2021.12\n使用 Python 做内部审批流，后续被智能体侧复用为可调用工具。\n\n项目：「舟问」客服中台，日均会话 8000+，人工接管率下降 18%。编排侧使用 LangChain 生态的 LCEL 与图工作流做状态机。\n\n技能：Python、大模型、工具调用、多智能体、提示词工程、LCEL、LangGraph\n4 年相关经验。"
     },
     {
       "id": "resume-cv_003",
@@ -54,7 +59,8 @@
       "path": "samples/resume-cv_003.docx",
       "tag": "推荐",
       "salary": "32-48K",
-      "years": 6
+      "years": 6,
+      "preview": "姓名：韩沐辰\n求职意向：LLM 应用 / Agent 工程师\n教育经历：西麓大学 人工智能 本科 2015-2019\n\n工作经历：\n星河对话 | 高级应用工程师 | 2019.07-至今\n6 年持续做对话与 Agent 产品。近三年把单轮 Bot 升级为可执行工具的 Agent。用 Python + LangChain 实现代码 Agent 与浏览器 Agent 双通道，生产环境日活约 3000。Function Calling 层对接 IDE 插件与内部知识检索，含并发限流。Multi-Agent 采用规划器+执行器+评论器，失败任务自动降级为人工。Prompt Engineering 方面维护 40+ 模板，按任务类型做自动路由。\n\n项目：「星河码助手」补全、修单测、查日志三位一体，平均每任务调用工具 6.4 次。自研 tracing 把每步工具参数落盘，便于复盘幻觉。\n\n技能：Python、LangChain、Function Calling、Multi-Agent、Prompt Engineering、MCP（试用）"
     },
     {
       "id": "resume-cv_004",
@@ -63,7 +69,8 @@
       "path": "samples/resume-cv_004.docx",
       "tag": "复核",
       "salary": "20-32K",
-      "years": 3
+      "years": 3,
+      "preview": "姓名：陈思齐\n求职意向：大模型应用工程师\n教育经历：青城学院 计算机 本科 2018-2022\n\n工作经历：\n木兰计算 | NLP 应用工程师 | 2022.07-至今（满 3 年）\n主要做企业知识库问答与 FAQ 机器人，技术栈含 Python、LangChain 检索链。Prompt Engineering 以改系统提示词和拒答策略为主，缺少复杂工具规划。Function Calling 仅对接过“查文档”“查工单状态”两个只读接口，无写操作、无幂等设计。Multi-Agent 停留在技术预研，做过一次规划器 Demo，未上线。\n\n项目：「木兰问问」RAG 问答，准确率 71%，用户反馈“不会办事只会答”。\n\n技能：Python、LangChain、Function Calling、Multi-Agent、Prompt Engineering、RAG\n年限刚达标，方向偏问答而非可执行 Agent。"
     },
     {
       "id": "resume-cv_005",
@@ -72,7 +79,8 @@
       "path": "samples/resume-cv_005.docx",
       "tag": "复核",
       "salary": "22-35K",
-      "years": 4
+      "years": 4,
+      "preview": "姓名：吴晓岚\n求职意向：LLM 应用开发（由算法转应用）\n教育经历：滨江大学 电子信息 本科 2017-2021\n\n工作经历：\n蓝桉网络 | 算法工程师 | 2021.07-2025.06\n4 年以训练与评测为主：分类模型、小规模指令微调、BLEU/人工抽检。2024 年起用 LangChain 把微调模型包成对话 Demo，供销售演示。Prompt Engineering 经验来自标注规范与指令模板，不是工具编排。Function Calling 与 Multi-Agent 均为跟读开源教程后的本地实验，无生产流量。\n\n项目：垂类客服 SFT 模型，实验室准确率 78%；应用侧无 SLA。\n\n技能：Python、PyTorch、LangChain、Function Calling、Multi-Agent、Prompt Engineering\n领域略偏模型训练，应用编排证据不足。"
     },
     {
       "id": "resume-cv_006",
@@ -81,7 +89,8 @@
       "path": "samples/resume-cv_006.docx",
       "tag": "复核",
       "salary": "20-30K",
-      "years": 3
+      "years": 3,
+      "preview": "姓名：赵予安\n求职意向：Agent 开发\n教育经历：禾山大学 软件工程 硕士 2019-2022\n\n工作经历：\n橙湾科技 | 全栈开发 | 2022.07-至今（3 年）\n前两年做管理后台（Vue + 普通 Python 脚本），2024 下半年才接触大模型。用 LangChain 做过一个内部周报摘要 Bot，Prompt Engineering 主要是改语气。Function Calling 接过日历查询；写操作被安全组禁止，没有重试与幂等。自称了解 Multi-Agent，实际是顺序调用两个 chain，无辩论、投票或角色分工。\n\n技能：Python、LangChain、Function Calling、Multi-Agent、Prompt Engineering、Vue\n相关深度不足一年，整体偏全栈转 LLM。周报 Bot 仅在 12 人团队内使用，没有评测集，也没有 tracing。"
     },
     {
       "id": "resume-cv_007",
@@ -90,7 +99,8 @@
       "path": "samples/resume-cv_007.docx",
       "tag": "不匹配",
       "salary": "12-20K",
-      "years": 1
+      "years": 1,
+      "preview": "姓名：孙博文\n求职意向：AI Agent 工程师\n教育经历：榕城大学 计算机 本科 2021-2025\n\n工作经历：\n云帆数字 | AI 应用实习生/初级工程师 | 2025.07-至今（约 1 年）\n在导师带领下用 Python 和 LangChain 改过内部 Demo。跟做过 Function Calling 实验：调用天气 API。阅读过 Multi-Agent 开源项目 README，未独立上线。Prompt Engineering 主要是把产品给的提示词贴进配置文件。\n\n校园项目：毕业设计“基于 LangChain 的课程问答”，无工具执行。\n\n技能：Python、LangChain、Function Calling、Multi-Agent、Prompt Engineering\n学历达标且关键字齐全，但从业年限约 1 年，不满足 3 年硬门槛。"
     },
     {
       "id": "resume-cv_008",
@@ -99,7 +109,8 @@
       "path": "samples/resume-cv_008.docx",
       "tag": "不匹配",
       "salary": "15-25K",
-      "years": 5
+      "years": 5,
+      "preview": "姓名：郑小禾\n求职意向：LLM 应用工程师\n教育经历：滨海职业技术学院 计算机应用 大专 2016-2019\n\n工作经历：\n磐石软件 | 应用开发 | 2019.08-至今（5 年+）\n长期用 Python 做内部工具。2023 后用 LangChain 做销售助手。Function Calling 对接 CRM 查询与写跟进记录，有重试。做过销售、售前两个角色的 Multi-Agent 试点，小范围使用。Prompt Engineering 按行业话术维护提示词库。\n\n技能：Python、LangChain、Function Calling、Multi-Agent、Prompt Engineering\n销售助手覆盖话术推荐与 CRM 回写，小范围 30 人使用，无正式 SLA。自学补过专升本课程但未取得本科学历。能力描述接近岗位，但最高学历为大专，不满足本科硬门槛。"
     }
   ]
 }
