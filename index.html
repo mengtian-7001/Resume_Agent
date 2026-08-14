@@ -190,8 +190,17 @@
     .dash-trend{padding:8px 22px 23px}
     .dash-trend-labels{display:flex;justify-content:space-between;color:#89948d;font-size:10px;margin-top:6px}
     .dash-trend-empty{padding:28px 8px;text-align:center;color:var(--muted);font-size:12px}
-    #dash-activity .act{cursor:pointer}
+    #dash-activity .act{
+      cursor:pointer;width:100%;background:transparent;text-align:left;
+      display:flex;gap:10px;align-items:flex-start;padding:11px 4px;
+      border:0;border-top:1px solid #f0f2f0;border-radius:8px;
+    }
+    #dash-activity .act > div{flex:1;min-width:0}
+    #dash-activity .act:hover{background:#f8f8f8}
     #dash-activity .act:hover b{text-decoration:underline}
+    .act-open{margin-left:auto;font-size:11px;font-weight:700;color:#177247;white-space:nowrap;font-style:normal;flex:0 0 auto}
+    .task-row{cursor:pointer;grid-template-columns:1fr auto auto auto}
+    .task-row:hover{background:#f8f8f8}
     #dash-priority .candidate{cursor:pointer}
     #dash-priority .candidate:hover{background:#f8f8f8}
     .stat-delta{font-size:11px;font-weight:700;margin-left:4px}
@@ -697,6 +706,58 @@
       '孙博文':{role:'AI 应用初级工程师 · 1 年经验',score:32,decision:'当前不建议推进',summary:'不满足岗位要求的最小相关工作年限。',gates:[['工作年限','1 年 ＜ 3 年','未通过'],['学历要求','本科 ≥ 本科','通过'],['必备技能','5 / 5 关键词覆盖','通过']],scores:[['硬条件',35],['技能匹配',55],['项目相关度',31],['生产实践',20]],quotes:['“工作经历约 1 年，不满足 3 年硬门槛。”','“未独立上线。”'],questions:[{id:'Q01',knowledge_point:'项目边界',question:'若岗位存在初级岗机会，可进一步了解其独立完成项目的边界。'},{id:'Q02',knowledge_point:'成长路径',question:'你计划在 6 个月内补齐哪些可验证的 Agent 工程能力？'}],followups:[{question:'请举一个你独立负责到交付的最小项目。'}],question:'若岗位存在初级岗机会，可进一步了解其独立完成项目的边界。'}
     };
     window.profiles=window.profiles||{};
+    // Keep the built-in demo aligned with the production Agent contract:
+    // every outcome receives >=10 structured questions and 3-5 follow-ups.
+    Object.entries(window.profiles).forEach(([candidateName, profile])=>{
+      profile.questions=(profile.questions||[]).map((item,index)=>({
+        ...item,
+        id:item.id||`Q${String(index+1).padStart(2,'0')}`,
+        knowledge_point:item.knowledge_point||'岗位核心能力',
+        difficulty:item.difficulty||['easy','medium','hard'][index%3],
+        scoring_rubric:item.scoring_rubric||'问题拆解 30%，技术方案 40%，边界与验证 30%'
+      }));
+      const topics=(profile.questions||[]).map(item=>item.knowledge_point).filter(Boolean);
+      if(!topics.length)topics.push('岗位核心能力');
+      const templates=[
+        '请用一个真实项目说明你在「{topic}」中的个人职责、关键动作与量化结果。',
+        '围绕「{topic}」设计一套从开发到上线的验收标准。',
+        '请复盘一次「{topic}」相关故障：根因、止损、修复和预防分别是什么？',
+        '如果业务目标临时变化，你会如何调整「{topic}」方案并控制风险？',
+        '请比较两种「{topic}」实现路径，并说明选型边界。',
+        '你会用哪些日志、指标或测试证明「{topic}」运行可靠？',
+        '请说明「{topic}」中必须保留人工确认的环节和原因。',
+        '资源减半时，你会如何裁剪「{topic}」范围并保持核心价值？',
+        '请描述一次你推动「{topic}」跨团队落地的经历。',
+        '如果候选方案失败，你会如何为「{topic}」设计降级与恢复流程。'
+      ];
+      const existing=new Set((profile.questions||[]).map(item=>item.question));
+      for(let i=0;profile.questions.length<10&&i<templates.length*topics.length;i+=1){
+        const topic=topics[i%topics.length];
+        const question=templates[Math.floor(i/topics.length)%templates.length].replaceAll('{topic}',topic);
+        if(existing.has(question))continue;
+        existing.add(question);
+        profile.questions.push({
+          id:`Q${String(profile.questions.length+1).padStart(2,'0')}`,
+          knowledge_point:topic,
+          difficulty:['easy','medium','hard'][profile.questions.length%3],
+          scoring_rubric:'问题拆解 30%，技术方案 40%，边界与验证 30%',
+          question
+        });
+      }
+      const followupTemplates=[
+        `请为 ${candidateName} 简历中的关键成果补充可核验数据和统计口径。`,
+        `请说明 ${candidateName} 在相关项目中独立负责与协作完成的边界。`,
+        `如果上线结果不及预期，请补充当时的复盘结论和后续改进。`
+      ];
+      profile.followups=profile.followups||[];
+      const existingFollowups=new Set(profile.followups.map(item=>item.question||item));
+      followupTemplates.forEach(question=>{
+        if(profile.followups.length<3&&!existingFollowups.has(question)){
+          profile.followups.push({question,target:'evidence_clarification',evidence_required:true});
+          existingFollowups.add(question);
+        }
+      });
+    });
     Object.assign(window.profiles['陈思齐']||{},{
       checkerAudit:{
         summary:'发现 2 个需关注问题，建议人工复核。',

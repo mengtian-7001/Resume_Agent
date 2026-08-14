@@ -285,7 +285,7 @@ class OpenAIConstructionAgent:
         correction = apply_checker_corrections(match_result, claims, revision_feedback)
         decision = match_result["decision"]
         risks = match_result["risks"]
-        expected = 10 if decision == "recommend" else 5 if decision == "review" else 3
+        expected = 10
         if revision_feedback:
             # Force a fresh question pack when revising from Checker.
             state["questions"] = []
@@ -340,7 +340,7 @@ class OpenAIConstructionAgent:
                                 questions.append(q)
                             if len(questions) >= expected:
                                 break
-                    if len(followups) < 2:
+                    if len(followups) < 3:
                         _, followups = self.fallback._generate_questions(
                             requirements,
                             profile,
@@ -374,6 +374,33 @@ class OpenAIConstructionAgent:
                             "error": str(exc)[:300],
                         }
                     )
+
+        # A model may return fewer items than requested during the tool loop.
+        # Complete the contract deterministically before exposing the output.
+        if len(questions) < expected or len(followups) < 3:
+            fallback_questions, fallback_followups = self.fallback._generate_questions(
+                requirements,
+                profile,
+                decision=decision,
+                missing_required=missing_required,
+                risks=risks,
+            )
+            seen_questions = {str(item.get("question") or "") for item in questions}
+            for item in fallback_questions:
+                text = str(item.get("question") or "")
+                if text and text not in seen_questions:
+                    questions.append(item)
+                    seen_questions.add(text)
+                if len(questions) >= expected:
+                    break
+            seen_followups = {str(item.get("question") or "") for item in followups}
+            for item in fallback_followups:
+                text = str(item.get("question") or "")
+                if text and text not in seen_followups:
+                    followups.append(item)
+                    seen_followups.add(text)
+                if len(followups) >= 3:
+                    break
 
         questions = questions[:expected]
         followups = followups[:5]
@@ -663,7 +690,7 @@ class OpenAIConstructionAgent:
             decision = scored["decision"]
             missing = list(scored.get("missing_required") or [])
             risks = list(scored.get("risks") or [])
-            expected = 10 if decision == "recommend" else 5 if decision == "review" else 3
+            expected = 10
             questions, followups = self.fallback._generate_questions(
                 requirements,
                 profile,
@@ -936,7 +963,7 @@ class OpenAIConstructionAgent:
                 "resume_document": wrap_untrusted_document("resume", str(profile.get("raw_text") or ""), limit=1800),
             },
             "question_count": expected,
-            "followup_count": 3 if decision == "recommend" else 2,
+            "followup_count": 3,
             "job_context_mode": (job_context or {}).get("mode"),
             "related_skills": (job_context or {}).get("related_skills"),
             "memory_context": memory_context or {"trusted_priors": [], "soft_references": []},

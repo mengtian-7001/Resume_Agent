@@ -244,7 +244,10 @@ class MockConstructionAgent:
                 unique_followups.append(item)
         followups = unique_followups[:5]
 
-        question_count = 10 if decision == "recommend" else 5 if decision == "review" else 3
+        # Every candidate still receives a complete interview pack for every
+        # candidate outcome. A reject still receives gap-validation questions;
+        # it must not silently skip the interview follow-up pack.
+        question_count = 10
         stems_by_decision = {
             "recommend": [
                 "{name}，请复盘一个与「{skill}」相关的项目：背景、你的动作、可量化结果分别是什么？",
@@ -264,6 +267,11 @@ class MockConstructionAgent:
                 "如果试用期要证明你具备「{skill}」，你会选哪两个里程碑交付物？",
                 "围绕 {title}，请说明「{skill}」在你过往工作中的真实参与深度（负责/协助/了解）。",
                 "请讲一次与「{skill}」相关的协作冲突或需求变更，你如何对齐目标并收口。",
+                "请列出「{skill}」从开发到上线的验收清单，并说明最容易遗漏的风险。",
+                "如果面试官质疑你在「{skill}」上的贡献，请用原始数据、日志或交付物证明个人职责。",
+                "请为「{skill}」设计一个失败案例复盘：触发条件、影响范围、修复与预防分别是什么？",
+                "在资源受限时，你会怎样为「{skill}」确定最小可行范围和停止条件？",
+                "请解释「{skill}」方案中需要人工确认的边界，以及如何留下审计记录。",
             ],
             "reject": [
                 "当前匹配偏弱。若补齐「{skill}」，你认为 30/60/90 天最短可验证路径是什么？",
@@ -271,6 +279,11 @@ class MockConstructionAgent:
                 "假设你仍想争取该方向，请设计一个最小实验来证明你具备「{skill}」相关潜力。",
                 "针对年限/能力差距，请用一个高难度任务说明你曾如何快速追上团队节奏。",
                 "请选择一个与「{skill}」相邻的可迁移经验，解释它为何能支撑本岗位核心工作。",
+                "请给出学习「{skill}」后的第一个可验收交付物，并说明通过与不通过的标准。",
+                "如果两周内需要补齐「{skill}」基础，你会如何安排实践、反馈和复盘？",
+                "请说明你过去一次能力短板暴露后的改进过程，并给出可核验的结果。",
+                "针对「{skill}」缺口，你希望获得哪些支持，又能独立承担哪些部分？",
+                "如果无法在期限内补齐「{skill}」，你会如何尽早暴露风险并调整计划？",
             ],
         }
         stems = stems_by_decision.get(decision) or stems_by_decision["review"]
@@ -474,24 +487,28 @@ class MockCheckerAgent:
                 "保留人工复核，要求候选人按项目说明本人职责、交付物和可量化结果。",
                 "production_evidence",
             )
-        if result["decision"] == "recommend" and len(context.questions) < 10:
+        if len(context.questions) < 10:
             issue(
                 "insufficient_questions",
                 "high",
-                "推荐候选人缺少完整的面试验证题组。",
+                "候选人缺少完整的面试验证题组。",
                 "补齐至少 10 道覆盖核心技能、项目证据和风险点的问题。",
                 "question_react",
             )
-        if result["decision"] == "recommend" and len(context.followups) < 3:
+        if len(context.followups) < 3:
             issue(
                 "insufficient_followups",
                 "medium",
-                "推荐候选人的风险追问不足。",
+                "候选人的风险追问不足。",
                 "补齐至少 3 个围绕证据真实性和生产边界的追问。",
                 "question_react",
             )
         for question in context.questions:
-            if not question.get("scoring_rubric") or not question.get("knowledge_point"):
+            if (
+                not question.get("scoring_rubric")
+                or not question.get("knowledge_point")
+                or not question.get("difficulty")
+            ):
                 issue(
                     "invalid_question_schema",
                     "high",

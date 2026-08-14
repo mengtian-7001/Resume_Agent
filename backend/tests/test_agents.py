@@ -50,7 +50,7 @@ class MockAgentWorkflowTests(unittest.TestCase):
         self.assertTrue(all(question["scoring_rubric"] for question in output.questions))
         self.assertEqual(self.checker.review(output)["status"], "pass")
 
-    def test_gate_failure_does_not_generate_full_exam(self) -> None:
+    def test_gate_failure_generates_gap_validation_exam(self) -> None:
         output = self.agent.analyze(
             self.requirements,
             {
@@ -63,9 +63,9 @@ class MockAgentWorkflowTests(unittest.TestCase):
 
         self.assertEqual(output.match_result["decision"], "reject")
         self.assertFalse(output.match_result["hard_gate_pass"])
-        self.assertLess(len(output.questions), 10)
+        self.assertGreaterEqual(len(output.questions), 10)
         self.assertEqual(len({q["question"] for q in output.questions}), len(output.questions))
-        self.assertGreaterEqual(len(output.followups), 1)
+        self.assertGreaterEqual(len(output.followups), 3)
 
     def test_missing_one_skill_goes_to_review_not_hard_reject(self) -> None:
         output = self.agent.analyze(
@@ -80,7 +80,8 @@ class MockAgentWorkflowTests(unittest.TestCase):
 
         self.assertTrue(output.match_result["hard_gate_pass"])
         self.assertEqual(output.match_result["decision"], "review")
-        self.assertGreaterEqual(len(output.questions), 5)
+        self.assertGreaterEqual(len(output.questions), 10)
+        self.assertGreaterEqual(len(output.followups), 3)
         self.assertTrue(any("FastAPI" in (q["question"] + q["knowledge_point"]) for q in output.questions))
 
     def test_checker_exposes_auditable_overclaim_and_repair(self) -> None:

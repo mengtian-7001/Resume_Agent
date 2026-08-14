@@ -13,6 +13,13 @@ def map_review_status(status: str | None) -> str:
     return "pass" if value == "pass" else "fail"
 
 
+def normalize_match_decision(value: Any) -> str:
+    text = str(value or "review").strip().lower()
+    if text in {"recommend", "review", "reject"}:
+        return text
+    return "review"
+
+
 def persist_candidate_core(
     client: Any,
     *,
@@ -36,6 +43,10 @@ def persist_candidate_core(
         with db_lock:
             return fn()
 
+    match_payload = {
+        **match_payload,
+        "decision": normalize_match_decision(match_payload.get("decision")),
+    }
     review_body = {
         "status": review.get("status"),
         "issues": review.get("issues") or [],
@@ -85,9 +96,10 @@ def persist_candidate_core(
     except Exception as exc:
         message = str(exc)
         missing = "PGRST202" in message or "schema cache" in message or "persist_screening_candidate_core" in message
-        if not missing:
+        type_mismatch = "42804" in message or "match_decision" in message
+        if not missing and not type_mismatch:
             raise
-        logger.warning("persist RPC unavailable, falling back to multi-upsert: %s", message[:160])
+        logger.warning("persist RPC unavailable or type-mismatched, falling back to multi-upsert: %s", message[:160])
         return _run(
             lambda: _fallback_upserts(
                 client,

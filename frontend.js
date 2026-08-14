@@ -194,13 +194,27 @@ function wireUpload(supabase) {
 
   startButton.addEventListener("click", async () => {
     try {
+      if (!selected.jd) throw new Error("请先选择 1 份 JD。");
+      if (selected.resumes.length < 1) throw new Error("请至少选择 1 份候选人简历。");
       startButton.disabled = true;
-      startButton.textContent = "正在上传…";
-      resetParseMeterState();
-      updateParseMeter({ upload: "processing" }, { status: "uploading" });
-      const jobId = await startScreening(supabase);
       startButton.textContent = "正在解析…";
+      resetParseMeterState();
+      const previewDocs = [
+        { original_filename: selected.jd.name, document_type: "jd", size_bytes: selected.jd.size },
+        ...selected.resumes.map((file) => ({
+          original_filename: file.name,
+          document_type: "resume",
+          size_bytes: file.size,
+        })),
+      ];
       window.showView?.("upload");
+      showSubmittedPanel(
+        { title: selected.jd.name.replace(/\.[^.]+$/, ""), status: "uploading" },
+        previewDocs,
+      );
+      updateParseMeter({ upload: "processing" }, { status: "uploading" });
+      beginSyntheticParseProgress();
+      const jobId = await startScreening(supabase);
       await runOneClickParse(jobId);
       startButton.textContent = "解析完成 ✓";
       followLiveJobId = null;
@@ -210,6 +224,9 @@ function wireUpload(supabase) {
       window.showView?.("results");
     } catch (error) {
       stopSyntheticParseProgress();
+      document.getElementById("upload")?.classList.remove("upload-busy");
+      const panel = document.getElementById("submitted-panel");
+      if (panel) panel.hidden = true;
       startButton.disabled = false;
       startButton.textContent = "一键解析 →";
       showUploadError(error.message);
@@ -485,6 +502,7 @@ function resetUploadWorkspace() {
   if (chainList) {
     chainList.innerHTML = '<p class="agent-chain-empty">一键解析后，这里会实时显示 Construction / Checker 等步骤。</p>';
   }
+  window.__agentChainSteps = [];
   if (chainMode) chainMode.textContent = "等待步骤事件…";
   // Reset five-step track UI.
   document.querySelectorAll("#parse-track .parse-step").forEach((node) => {
@@ -505,8 +523,9 @@ function showSubmittedPanel(job, documents) {
   const title = document.getElementById("submitted-title");
   const viewResults = document.getElementById("view-results-btn");
   const uploadView = document.getElementById("upload");
-  if (!panel || !list || !documents?.length) return;
+  if (!panel || !list) return;
 
+  const docs = Array.isArray(documents) ? documents : [];
   const info = jobStatusLabels[job.status] || { label: job.status, desc: "" };
   const wasHidden = panel.hidden;
   panel.hidden = false;
@@ -515,15 +534,15 @@ function showSubmittedPanel(job, documents) {
   status.textContent = info.label;
   status.dataset.state = job.status;
   desc.textContent = getJobStatusDesc(job);
-  list.innerHTML = documents.map(submittedDocMarkup).join("");
+  list.innerHTML = docs.length
+    ? docs.map(submittedDocMarkup).join("")
+    : '<p class="file-empty">本次任务没有可展示的上传文件，仍可查看下方智能体步骤与错误信息。</p>';
   if (viewResults) {
     viewResults.hidden = job.status !== "completed";
     viewResults.className = job.status === "completed" ? "primary" : "outline";
   }
   if (wasHidden) {
-    window.requestAnimationFrame(() => {
-      panel.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    panel.scrollIntoView({ behavior: "instant", block: "start" });
   }
 }
 
@@ -591,6 +610,7 @@ async function refreshAgentChain(supabase, jobId) {
       .maybeSingle();
     if (error) throw error;
     const steps = Array.isArray(data?.state?.steps) ? data.state.steps : [];
+    window.__agentChainSteps = steps;
     const mode = data?.mode || "—";
     const stage = data?.state?.stage || data?.status || "waiting";
     if (modeNode) modeNode.textContent = `mode=${mode} · ${stage} · ${steps.length} steps`;
@@ -949,24 +969,12 @@ async function updateParseProgress(supabase, job) {
   };
 
   const meter = getParseMeterState();
-  // Only stage the 5 steps while the synthetic meter is actively running.
-  // Completed jobs opened later must show all steps done (not stuck on 上传).
-  const elapsed = Date.now() - (meter.startedAt || Date.now());
-  const holdVisual = Boolean(meter.syntheticTimer)
-    && (job.status === "completed" || meter.backendDone)
-    && meter.displayed < 100
-    && elapsed < PARSE_METER_MIN_MS;
   if (meter.displayed >= 100 && (job.status === "completed" || meter.backendDone)) {
     PARSE_STEP_ORDER.forEach((step) => { stepStates[step] = "completed"; });
-  } else if (holdVisual) {
-    const stage = Math.min(PARSE_STEP_ORDER.length - 1, Math.floor(elapsed / 2000));
-    PARSE_STEP_ORDER.forEach((step, index) => {
-      if (index < stage) stepStates[step] = "completed";
-      else if (index === stage) stepStates[step] = "processing";
-      else stepStates[step] = "queued";
-    });
   } else if (job.status === "completed") {
     Object.keys(stepStates).forEach((key) => { stepStates[key] = "completed"; });
+  } else {
+    mergeAgentChainIntoSteps(stepStates, window.__agentChainSteps || []);
   }
 
   Object.entries(stepStates).forEach(([step, status]) => setParseStep(step, status));
@@ -1008,19 +1016,26 @@ const PARSE_STEP_LABELS = {
 
 const PARSE_STEP_ORDER = Object.keys(PARSE_STEP_WEIGHTS);
 
-/** Minimum visual duration before 100% is allowed (backend often finishes much sooner). */
-const PARSE_METER_MIN_MS = 4500;
-
-/** Timeline caps: [elapsedMs, maxPercent]. 100% only after min duration + backend done. */
-const PARSE_METER_TIMELINE = [
-  [0, 4],
-  [1200, 14],
-  [2800, 30],
-  [4500, 48],
-  [6500, 66],
-  [8500, 82],
-  [PARSE_METER_MIN_MS, 96],
-];
+function mergeAgentChainIntoSteps(stepStates, steps) {
+  if (!Array.isArray(steps) || !steps.length) return stepStates;
+  const blob = (step) => `${step.id || ""} ${step.label || ""}`.toLowerCase();
+  const statusOf = (step) => String(step.status || "").toLowerCase();
+  const done = (test) => steps.some((step) => test(blob(step)) && statusOf(step) === "completed");
+  const running = (test) => steps.some((step) => test(blob(step)) && ["running", "processing"].includes(statusOf(step)));
+  const bump = (key, next) => {
+    const rank = { queued: 0, wait: 0, processing: 1, uploading: 1, completed: 2, failed: 2 };
+    if ((rank[next] || 0) > (rank[stepStates[key]] || 0)) stepStates[key] = next;
+  };
+  if (done((text) => text.includes("parse_jd"))) bump("parse_jd", "completed");
+  else if (running((text) => text.includes("parse_jd"))) bump("parse_jd", "processing");
+  if (done((text) => /parse_resume|解析候选人/.test(text))) bump("parse_resume", "completed");
+  else if (running((text) => /parse_resume|解析候选人/.test(text))) bump("parse_resume", "processing");
+  if (done((text) => /llm_judge|decision \+|match\.start|construction/.test(text))) bump("match", "completed");
+  else if (running((text) => /llm_judge|decision \+|match\.start|construction/.test(text))) bump("match", "processing");
+  if (done((text) => /generate_questions|checker/.test(text))) bump("questions", "completed");
+  else if (running((text) => /generate_questions|checker|面试题/.test(text))) bump("questions", "processing");
+  return stepStates;
+}
 
 function getParseMeterState() {
   if (!window.__parseMeter) {
@@ -1067,59 +1082,21 @@ function resetParseMeterState() {
   meter.lastStepStates = null;
 }
 
-function timelinePercentCap(elapsedMs, backendDone) {
-  const points = PARSE_METER_TIMELINE;
-  let cap = points[0][1];
-  for (let i = 0; i < points.length - 1; i += 1) {
-    const [t0, p0] = points[i];
-    const [t1, p1] = points[i + 1];
-    if (elapsedMs <= t0) {
-      cap = p0;
-      break;
-    }
-    if (elapsedMs >= t1) {
-      cap = p1;
-      continue;
-    }
-    const ratio = (elapsedMs - t0) / Math.max(1, t1 - t0);
-    cap = p0 + (p1 - p0) * ratio;
-    break;
-  }
-  if (elapsedMs >= points[points.length - 1][0]) {
-    cap = points[points.length - 1][1];
-  }
-  cap = Math.min(96, Math.max(0, cap));
-  if (backendDone && elapsedMs >= PARSE_METER_MIN_MS) return 100;
-  return Math.floor(cap);
-}
-
 function beginSyntheticParseProgress() {
   const meter = getParseMeterState();
   stopSyntheticParseProgress();
   if (!meter.startedAt) meter.startedAt = Date.now();
-  meter.syntheticStage = 0;
   meter.backendDone = false;
   meter.jobCompleted = false;
-  // Drive staged labels + capped targets while API / polling runs.
   meter.syntheticTimer = window.setInterval(() => {
-    const elapsed = Date.now() - (meter.startedAt || Date.now());
-    const stage = Math.min(
-      PARSE_STEP_ORDER.length - 1,
-      Math.floor(elapsed / 2000)
-    );
-    meter.syntheticStage = stage;
-    const softStates = {};
-    PARSE_STEP_ORDER.forEach((step, index) => {
-      if (meter.backendDone && elapsed >= PARSE_METER_MIN_MS - 500) {
-        softStates[step] = "completed";
-      } else if (index < stage) softStates[step] = "completed";
-      else if (index === stage) softStates[step] = "processing";
-      else softStates[step] = "queued";
-    });
-    updateParseMeter(softStates, {
-      status: meter.backendDone ? "completed" : "processing",
-    });
-  }, 250);
+    updateParseMeter(meter.lastStepStates || {
+      upload: "processing",
+      parse_jd: "queued",
+      parse_resume: "queued",
+      match: "queued",
+      questions: "queued",
+    }, { status: meter.backendDone ? "completed" : "processing" });
+  }, 400);
 }
 
 function stopSyntheticParseProgress() {
@@ -1144,17 +1121,16 @@ function markAllParseStepsComplete() {
   });
 }
 
-function waitForParseMeterComplete(timeoutMs = 18000) {
+function waitForParseMeterComplete(timeoutMs = 12000) {
   const meter = getParseMeterState();
   meter.backendDone = true;
   meter.jobCompleted = true;
+  meter.finishedAt = meter.finishedAt || Date.now();
   ensureParseMeterAnimation();
   return new Promise((resolve) => {
     const started = Date.now();
     const timer = window.setInterval(() => {
-      const elapsed = Date.now() - (meter.startedAt || started);
-      const cap = timelinePercentCap(elapsed, true);
-      meter.target = Math.max(meter.target || 0, Math.min(100, cap));
+      meter.target = 100;
       if (meter.displayed >= 100 || Date.now() - started >= timeoutMs) {
         meter.displayed = 100;
         meter.target = 100;
@@ -1175,15 +1151,11 @@ function ensureParseMeterAnimation() {
   const meter = getParseMeterState();
   if (meter.animTimer) return;
   meter.animTimer = window.setInterval(async () => {
-    const elapsed = Date.now() - (meter.startedAt || Date.now());
-    const cap = timelinePercentCap(elapsed, meter.backendDone || meter.jobCompleted);
-    // Target follows the wall-clock timeline only (never leaps past the cap).
-    meter.target = Math.max(meter.displayed || 0, cap);
-    meter.floor = Math.max(meter.floor || 0, Math.min(96, meter.target));
-
+    const done = meter.backendDone || meter.jobCompleted;
+    if (done) meter.target = 100;
     const gap = meter.target - meter.displayed;
     if (gap > 0) {
-      const step = gap > 25 ? 2 : 1;
+      const step = done ? Math.max(2, Math.ceil(gap / 6)) : 1;
       meter.displayed = Math.min(meter.target, meter.displayed + step);
       if (meter.displayed < 100) {
         meter.title = jobStatusLabels.processing?.label || "解析中";
@@ -1236,14 +1208,8 @@ function updateParseMeter(stepStates, job) {
   let activeStep = null;
   let waitingStep = null;
 
-  // When backend already finished, keep showing staged labels from synthetic timeline
-  // instead of snapping every step to "completed".
-  const useStates = (meter.backendDone || job?.status === "completed") && meter.syntheticTimer
-    ? stepStates
-    : stepStates;
-
   for (const [step, weight] of Object.entries(PARSE_STEP_WEIGHTS)) {
-    const state = useStates?.[step];
+    const state = stepStates?.[step];
     const safeWeight = Number(weight);
     if (!Number.isFinite(safeWeight)) continue;
     if (state === "completed") {
@@ -1252,7 +1218,7 @@ function updateParseMeter(stepStates, job) {
     }
     if (state === "processing" || state === "uploading") {
       activeStep = step;
-      percent += Math.round(safeWeight * 0.35);
+      percent += Math.round(safeWeight * 0.28);
       currentLabel = PARSE_STEP_LABELS[step] || "处理中…";
       break;
     }
@@ -1275,17 +1241,16 @@ function updateParseMeter(stepStates, job) {
 
   if (activeStep && !(meter.backendDone || job?.status === "completed")) {
     const stepWeight = Number(PARSE_STEP_WEIGHTS[activeStep]) || 0;
-    const base = Math.round(stepWeight * 0.35);
-    const room = Math.max(0, stepWeight - base - 1);
+    const base = Math.round(stepWeight * 0.28);
+    const room = Math.max(0, stepWeight - base - 2);
     const elapsedStep = Math.max(0, Date.now() - (meter.stepStartedAt || Date.now()));
-    const creep = Math.min(room, Math.floor(elapsedStep / 900));
+    const creep = Math.min(room, Math.floor(elapsedStep / 2200));
     percent += creep;
   }
 
   if (job?.status === "completed" || meter.backendDone) {
     meter.backendDone = true;
     meter.jobCompleted = true;
-    // Do NOT force percent=100 here — timeline cap decides when 100 is allowed.
     if (!activeStep && !waitingStep) {
       currentLabel = "正在汇总匹配结果与面试题…";
     }
@@ -1295,18 +1260,11 @@ function updateParseMeter(stepStates, job) {
 
   percent = Number(percent);
   if (!Number.isFinite(percent)) percent = 0;
-  percent = Math.max(0, Math.min(96, Math.round(percent)));
+  const finished = meter.backendDone || job?.status === "completed";
+  percent = Math.max(0, Math.min(finished ? 100 : 96, Math.round(percent)));
 
-  const elapsed = Date.now() - meter.startedAt;
-  const cap = timelinePercentCap(elapsed, meter.backendDone);
-  const capped = Math.min(percent, cap);
-  // Also allow timeline itself to advance the bar during long waits.
-  const merged = Math.max(capped, Math.min(cap, meter.floor || 0));
-
-  meter.floor = Math.max(meter.floor || 0, merged);
-  meter.target = Math.max(meter.target || 0, Math.min(cap, Math.max(meter.floor, merged)));
-  // Hard clamp: never let target exceed timeline until unlock.
-  meter.target = Math.min(meter.target, cap);
+  meter.floor = Math.max(meter.floor || 0, percent);
+  meter.target = finished ? 100 : Math.max(meter.floor, percent);
 
   meter.label = currentLabel;
   meter.title = meter.displayed >= 100
@@ -1504,16 +1462,17 @@ function renderDashboardActivity(items, { onOpen } = {}) {
     return;
   }
   box.innerHTML = items.map((item) => `
-    <div class="act" data-job-id="${escapeHtml(item.jobId || "")}">
+    <button type="button" class="act" data-job-id="${escapeHtml(item.jobId || "")}">
       <i class="dot" style="background:${escapeHtml(item.color || "#177247")}"></i>
       <div><b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.detail || "")}</span></div>
       <time>${escapeHtml(item.time || "")}</time>
-    </div>`).join("");
-  box.querySelectorAll(".act[data-job-id]").forEach((row) => {
-    row.addEventListener("click", () => {
-      if (row.dataset.jobId) onOpen?.(row.dataset.jobId);
-    });
-  });
+      <em class="act-open">${item.jobId ? "查看" : "记录"}</em>
+    </button>`).join("");
+  box.onclick = (event) => {
+    const row = event.target.closest(".act");
+    if (!row || !box.contains(row)) return;
+    onOpen?.(row.dataset.jobId || "");
+  };
 }
 
 function renderDashboardPriority(rows, { onOpen } = {}) {
@@ -1742,7 +1701,10 @@ async function loadDashboard(supabase) {
       || null;
     const openDashboardJob = (jobOrId) => {
       const id = typeof jobOrId === "string" ? jobOrId : jobOrId?.id;
-      if (!id) return;
+      if (!id) {
+        window.showView?.("tasks");
+        return;
+      }
       openJob(supabase, id);
     };
     renderDashboardPipeline(liveJob, { onOpen: openDashboardJob });
@@ -1937,13 +1899,16 @@ function wireLiveViews(supabase, sessionReady) {
   document.addEventListener("viewchange", (event) => {
     if (event.detail.view === "dashboard") loadDashboard(supabase);
     if (event.detail.view === "upload") {
-      // Entering「发起筛选」= prepare a new run, unless currently following an in-flight job.
-      const busy = document.getElementById("upload")?.classList.contains("upload-busy");
-      const followingLive = Boolean(followLiveJobId) && busy;
-      if (!followingLive) {
-        stopJobPolling();
-        resetUploadWorkspace();
-        refreshRecentJobsHint(supabase);
+      if (window.__openingHistoryJob) {
+        window.__openingHistoryJob = false;
+      } else {
+        const busy = document.getElementById("upload")?.classList.contains("upload-busy");
+        const followingLive = Boolean(followLiveJobId) && busy;
+        if (!followingLive) {
+          stopJobPolling();
+          resetUploadWorkspace();
+          refreshRecentJobsHint(supabase);
+        }
       }
     }
     if (event.detail.view === "tasks") loadTaskHistory(supabase);
@@ -2010,12 +1975,18 @@ async function loadTaskHistory(supabase) {
     return;
   }
   list.innerHTML = jobs.map((job) => taskRowMarkup(job)).join("");
-  list.querySelectorAll(".task-row").forEach((row) => {
-    row.addEventListener("click", () => openJob(supabase, row.dataset.jobId));
-  });
+  list.onclick = (event) => {
+    const row = event.target.closest(".task-row");
+    if (!row || !list.contains(row)) return;
+    openJob(supabase, row.dataset.jobId);
+  };
 }
 
 async function openJob(supabase, jobId) {
+  if (!jobId) {
+    window.showView?.("tasks");
+    return;
+  }
   const { data: job } = await supabase
     .from("screening_jobs")
     .select("id,title,status,candidate_count,processed_count,error_message")
@@ -2023,25 +1994,26 @@ async function openJob(supabase, jobId) {
     .single();
   if (!job) return;
   activeJobId = job.id;
+  const inFlight = ["queued", "processing", "uploading"].includes(job.status);
   if (job.status === "completed") {
     followLiveJobId = null;
     await loadResults(supabase, job.id);
-    window.showView?.("results");
-    return;
+    if (latestResultsSnapshot?.candidates?.length) {
+      window.showView?.("results");
+      return;
+    }
   }
-  // In-flight or failed: open on upload with live panel, then user can wait or restart.
-  followLiveJobId = job.id;
+  followLiveJobId = inFlight ? job.id : null;
   const { data: documents } = await supabase
     .from("documents")
     .select("original_filename,document_type,size_bytes")
     .eq("screening_job_id", job.id)
     .order("document_type");
-  if (documents?.length) showSubmittedPanel(job, documents);
+  showSubmittedPanel(job, documents || []);
   await updateParseProgress(supabase, job);
   await refreshAgentChain(supabase, job.id);
-  if (["queued", "processing", "uploading"].includes(job.status)) {
-    startJobPolling(supabase, job.id);
-  }
+  if (inFlight) startJobPolling(supabase, job.id);
+  window.__openingHistoryJob = true;
   window.showView?.("upload");
 }
 
@@ -2052,7 +2024,7 @@ function taskRowMarkup(job) {
     : "等待开始";
   const time = formatTaskTime(job.created_at);
   const jobId = job.id ? ` data-job-id="${job.id}"` : "";
-  return `<div class="task-row"${jobId}><div><b>${escapeHtml(job.title || "未命名任务")}</b><span>${progress}</span></div><time class="task-meta">${escapeHtml(time)}</time><span class="task-status" data-state="${escapeHtml(job.status)}">${escapeHtml(info.label)}</span></div>`;
+  return `<div class="task-row"${jobId}><div><b>${escapeHtml(job.title || "未命名任务")}</b><span>${progress}</span></div><time class="task-meta">${escapeHtml(time)}</time><span class="task-status" data-state="${escapeHtml(job.status)}">${escapeHtml(info.label)}</span><em class="act-open">查看</em></div>`;
 }
 
 function formatTaskTime(value) {

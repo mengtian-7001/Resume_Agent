@@ -2,11 +2,13 @@
 
 前端展示层配合 Supabase 托管数据库、私有文件存储和登录鉴权；Python Worker 负责文档解析与规则匹配。
 
+部署到 GitHub + Vercel 的完整步骤见 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)。部署构建会从环境变量生成浏览器所需的 `supabase-config.js`，该文件和服务端密钥都不会提交到仓库。
+
 ## 产品定位与最短闭环
 
 **用户**：招聘人员与用人经理。**目标**：把 JD 和多份非结构化简历转为可追溯的候选人优先级，降低人工复核成本；系统不作自动录用决定。
 
-最短演示闭环为：`1 份 JD + 多份简历 → 结构化解析 → 混合评分 → 原文证据与风险 → AI 质检 → 3–10 道面试题/追问 → 招聘人员复核`。
+最短演示闭环为：`1 份 JD + 多份简历 → 结构化解析 → 混合评分 → 原文证据与风险 → AI 质检 → 至少 10 道面试题 + 3–5 个追问 → 招聘人员复核`。
 
 - 未配置 Supabase 时，页面可直接进入演示模式：点「查看示例结果」展示预制闭环；「运行真实样例」需要 `./dev.sh`。
 - 配置本地环境后，`./dev.sh` 启动真实上传与 Worker；选择样例后点击「一键解析」走同一流程。
@@ -22,13 +24,51 @@
 
 核心 Prompt 约束：只接受 JD 或简历原文作为候选人能力证据；“了解、参与、预研、Demo”不能等同于“精通、主导、生产级”；输出必须给出引用、假设、风险级别与修正建议。
 
-## 架构
+## 架构与数据流
 
-```text
-浏览器 → Supabase Auth / PostgreSQL / Private Storage
-                    ↑
-              FastAPI Worker
+```mermaid
+flowchart LR
+    U[招聘人员] --> F[Web 工作台]
+    F --> A[Supabase Auth]
+    F --> S[Private Storage]
+    F --> D[(PostgreSQL + RLS)]
+    F --> W[FastAPI Worker]
+    W --> P[文档解析与结构化]
+    P --> C[Construction Agent]
+    C --> M[混合匹配评分]
+    M --> Q[至少 10 道面试题与 3–5 个追问]
+    Q --> K[Checker Agent]
+    K -->|发现问题与修订反馈| C
+    K --> R[结构化结果、证据与风险]
+    R --> D
+    S --> W
+    W --> D
+    C -.可选.-> L[LLM / Embedding / Neo4j / Web Research]
 ```
+
+浏览器只持有 Supabase publishable/anon key；文件进入私有 Storage，结构化记录和 Agent 状态进入启用 RLS 的 PostgreSQL。Worker 执行解析、Construction、Checker 和持久化，Checker 最多触发一次有上限的修订闭环，避免无限自循环。
+
+### Prompt 设计思路
+
+- **数据与指令隔离**：JD/简历作为不可信 `DATA` 包裹，明确要求模型忽略文档中的指令，降低 Prompt Injection 风险。
+- **证据先于结论**：候选人能力只能由 JD/简历原文支持；输出引用、假设、风险和置信度，禁止把“了解、参与、预研、Demo”升级成“精通、主导、生产级”。
+- **结构化 Contract**：Construction 和 Checker 都只接受固定 JSON Schema，面试题必须包含考察点、难度和评分标准，便于校验和持久化。
+- **失败闭合**：真实模型不可用、引用无法定位或 Checker 异常时，不伪装成功；推荐结论降为人工复核，确定性规则继续提供可演示结果。
+- **有界修订**：Checker 输出问题类型、严重程度、修正建议和可执行 patch，最多回传 Construction 一次，再保留最终审计记录。
+
+### 痛点与技术解法
+
+| 招聘痛点 | 技术解法 |
+| --- | --- |
+| PDF/DOCX 信息分散、字段不统一 | 文档解析后形成 JD 要求、候选人画像、Claim 与 Evidence 结构 |
+| 关键词相同不等于真实胜任 | 技能同义归一 + 硬门槛 + 项目/生产证据混合评分 |
+| AI 结论容易夸大或归因错误 | 独立 Checker 校验证据、分数、结论和题目，并回传一次修订 |
+| 面试官难以验证简历模糊表述 | 每位候选人生成至少 10 道结构化面试题和 3–5 个证据追问 |
+| 敏感简历与密钥容易泄露 | Supabase 私有存储、RLS、服务端密钥隔离、环境变量配置 |
+
+### 开发说明
+
+编码与文档整理使用了 AI 辅助；匹配规则、硬门槛和质检策略以仓库内可复现代码与测试为准。核心评分规则、证据边界、Checker 校验维度与最终取舍均以仓库内可复现代码和测试为准，没有把 AI 生成内容直接作为候选人事实。
 
 浏览器只使用 Supabase `anon` key。`service_role` key 仅供 FastAPI Worker 使用，不能写入 `supabase-config.js` 或提交到仓库。
 

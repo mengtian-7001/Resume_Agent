@@ -26,6 +26,12 @@ test("demo runs one-click JD-plus-resumes flow and opens a candidate", async ({ 
   await page.locator(".detail").first().click();
   await expect(page.locator("#candidate-drawer")).toHaveClass(/open/);
   await expect(page.locator("#drawer-checker")).toContainText("结论：");
+  await expect(page.locator("#drawer-questions .question-item")).toHaveCount(10);
+  const followupCount = await page.locator("#drawer-question").evaluate((node) =>
+    node.textContent.split("\n").filter(Boolean).length,
+  );
+  expect(followupCount).toBeGreaterThanOrEqual(3);
+  expect(followupCount).toBeLessThanOrEqual(5);
   expect(errors).toEqual([]);
 });
 
@@ -53,14 +59,14 @@ test("interview workspace records and restores candidate answers and scores", as
   await expect(page.locator("#interview-candidate-meta")).toContainText("林知远");
   await page.locator("#interview-answer-0").fill("候选人说明了幂等键与人工接管边界。");
   await page.locator("#interview-score-0").fill("8");
-  await expect(page.locator("#interview-total")).toHaveText("8 / 20");
+  await expect(page.locator("#interview-total")).toHaveText("8 / 100");
 
   await page.reload();
   await page.locator('[data-view="interview"]').click();
   await page.locator("#interview-candidate-select").selectOption("林知远");
   await expect(page.locator("#interview-answer-0")).toHaveValue("候选人说明了幂等键与人工接管边界。");
   await expect(page.locator("#interview-score-0")).toHaveValue("8");
-  await expect(page.locator("#interview-total")).toHaveText("8 / 20");
+  await expect(page.locator("#interview-total")).toHaveText("8 / 100");
   expect(errors).toEqual([]);
 });
 

@@ -4,6 +4,7 @@
   "description": "前端展示层配合 Supabase 托管数据库、私有文件存储和登录鉴权；Python Worker 负责文档解析与规则匹配。",
   "main": "frontend.js",
   "scripts": {
+    "build": "node scripts/generate-deploy-config.mjs",
     "test:browser": "playwright test",
     "test": "npm run test:browser"
   },

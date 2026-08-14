@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from app.agents import MockConstructionAgent, OpenAICheckerAgent, OpenAIConstructionAgent
 from app.checker_contract import CheckerInputBuilder
 from app.embeddings import cosine, local_embed
-from app.llm_client import LLMClientError, extract_json_object
+from app.llm_client import LLMClientError, extract_json_object, model_omits_temperature, temperature_unsupported
 from app.matching import hybrid_text_score, match_profile
 
 
@@ -38,6 +38,14 @@ class LlmClientHelpersTests(unittest.TestCase):
     def test_extract_json_object_rejects_empty(self) -> None:
         with self.assertRaises(LLMClientError):
             extract_json_object("")
+
+    def test_gpt5_omits_custom_temperature(self) -> None:
+        self.assertTrue(model_omits_temperature("gpt-5.4-2026-03-05"))
+        self.assertTrue(model_omits_temperature("gpt-5.6-sol"))
+        self.assertFalse(model_omits_temperature("gpt-4o-mini"))
+        self.assertTrue(temperature_unsupported(
+            "Unsupported value: 'temperature' does not support 0.1 with this model"
+        ))
 
 
 class EmbeddingTests(unittest.TestCase):
@@ -174,7 +182,8 @@ class OpenAIAgentFallbackTests(unittest.TestCase):
         det = float(output.match_result["score_breakdown"]["score_deterministic"])
         llm = float(output.match_result["score_breakdown"]["score_llm"])
         self.assertLessEqual(abs(llm - det), 18.0 + 1e-6)
-        self.assertEqual(len(output.questions), 3)
+        self.assertEqual(len(output.questions), 10)
+        self.assertGreaterEqual(len(output.followups), 3)
         self.assertTrue(any(t.get("action") == "react_plan" for t in output.trace))
         self.assertTrue(any(t.get("tool") == "llm_judge" and t.get("status") == "completed" for t in output.trace))
         self.assertTrue(any(t.get("action") == "reflect" for t in output.trace))

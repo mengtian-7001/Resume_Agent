@@ -83,8 +83,8 @@ def _process_job(job_id: str) -> dict[str, object]:
 
 
 def _ensure_local_dev(request: Request, config: Settings) -> None:
-    if config.agent_mode != "mock":
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    """Loopback-only. Mock and openai local one-click both use this unauthenticated path."""
+    del config
     client_host = request.client.host if request.client else ""
     if client_host not in {"127.0.0.1", "::1", "localhost"}:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Local dev only")
@@ -164,7 +164,7 @@ def process_job(body: ProcessJobRequest) -> dict[str, object]:
 
 @app.post("/dev/jobs/process")
 def process_job_dev(body: ProcessJobRequest, request: Request, config: Settings = Depends(get_settings)) -> dict[str, object]:
-    """Local mock-only endpoint so the browser can one-click parse without exposing tokens."""
+    """Localhost-only endpoint so the browser can one-click parse without exposing tokens."""
     _ensure_local_dev(request, config)
     return _process_job(body.job_id)
 

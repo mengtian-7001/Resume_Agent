@@ -16,6 +16,21 @@ logger = logging.getLogger("agent_chain")
 
 from .llm_limits import LLMBudgetExceeded, get_llm_limiter
 
+# Reasoning / GPT-5-class models reject custom temperature (only default 1).
+_OMIT_TEMPERATURE_MARKERS = ("gpt-5", "o1-", "o3-", "o4-", "-o1", "-o3")
+
+
+def model_omits_temperature(model: str | None) -> bool:
+    name = str(model or "").strip().lower()
+    if not name:
+        return False
+    return any(marker in name for marker in _OMIT_TEMPERATURE_MARKERS)
+
+
+def temperature_unsupported(body: str) -> bool:
+    text = (body or "").lower()
+    return "temperature" in text and ("unsupported" in text or "does not support" in text)
+
 
 @dataclass
 class ChatResult:
@@ -90,9 +105,10 @@ class OpenAICompatibleClient:
         payload: dict[str, Any] = {
             "model": self.model,
             "messages": messages,
-            "temperature": temperature,
             "max_tokens": max_tokens,
         }
+        if not model_omits_temperature(self.model):
+            payload["temperature"] = temperature
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
@@ -100,6 +116,7 @@ class OpenAICompatibleClient:
         started = time.perf_counter()
         last_error = ""
         limiter = get_llm_limiter()
+        dropped_temperature = "temperature" not in payload
         for attempt in range(max(1, max_retries)):
             try:
                 remaining = limiter.remaining_deadline_sec()
@@ -133,8 +150,19 @@ class OpenAICompatibleClient:
                 continue
 
             if response.status_code >= 400:
+                body = response.text[:400]
+                if (
+                    response.status_code == 400
+                    and not dropped_temperature
+                    and "temperature" in payload
+                    and temperature_unsupported(body)
+                ):
+                    payload.pop("temperature", None)
+                    dropped_temperature = True
+                    logger.warning("llm dropped unsupported temperature model=%s", self.model)
+                    continue
                 limiter.record_failure()
-                raise LLMClientError(f"status={response.status_code} body={response.text[:400]}")
+                raise LLMClientError(f"status={response.status_code} body={body}")
 
             duration_ms = int((time.perf_counter() - started) * 1000)
             raw = response.json()

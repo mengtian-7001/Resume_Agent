@@ -218,6 +218,34 @@ class PersistCoreTests(unittest.TestCase):
         self.assertEqual(result["mode"], "fallback")
         self.assertEqual(table.upsert.call_count, 3)
 
+    def test_fallback_when_decision_enum_cast_fails(self) -> None:
+        client = MagicMock()
+        client.rpc.side_effect = RuntimeError(
+            "{'message': 'column \"decision\" is of type match_decision but expression is of type text', 'code': '42804'}"
+        )
+        table = MagicMock()
+        client.table.return_value = table
+        table.upsert.return_value.execute.return_value = MagicMock()
+        result = persist_candidate_core(
+            client,
+            workspace_id="ws",
+            screening_job_id="job",
+            candidate_profile_id="cand",
+            match_payload={
+                "score": 82,
+                "decision": "recommend",
+                "hard_gate_pass": True,
+                "score_breakdown": {},
+                "evidence": [],
+                "risks": [],
+            },
+            questions=[{"question": "q1"}],
+            followups=[],
+            review={"status": "fail", "issues": [], "model": "openai"},
+        )
+        self.assertEqual(result["mode"], "fallback")
+        self.assertEqual(table.upsert.call_count, 3)
+
 
 if __name__ == "__main__":
     unittest.main()

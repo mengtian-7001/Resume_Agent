@@ -11,10 +11,15 @@ class TaskLeaseClient:
         self.lease_seconds = max(30, min(int(lease_seconds or 300), 600))
 
     def claim(self) -> dict[str, Any] | None:
-        response = self.client.rpc(
-            "claim_processing_task",
-            {"p_lease_seconds": self.lease_seconds},
-        ).execute()
+        try:
+            response = self.client.rpc(
+                "claim_processing_task",
+                {"p_lease_seconds": self.lease_seconds},
+            ).execute()
+        except Exception:
+            # Live DBs may still expose the zero-arg overload; PostgREST then
+            # cannot pick between claim_processing_task() and (integer).
+            response = self.client.rpc("claim_processing_task").execute()
         return response.data[0] if response.data else None
 
     def claim_for_job(self, job_id: str, task_type: str | None = None) -> dict[str, Any] | None:
