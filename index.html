@@ -500,14 +500,14 @@
         <section class="view" id="upload">
             <div class="intro"><div><h1>发起一次智能筛选</h1><p>选好 JD 和简历，点「一键解析」。历史任务在侧边「最近任务」或底部/左侧「任务」里查看，不会一进来就占满本页。</p></div></div>
           <div class="upload-layout"><div class="upload-main">
-            <div class="drop"><div class="drop-icon">▤</div><div><h2>上传岗位描述（JD）</h2><p>请上传 1 份岗位说明书，我们将提取职责、必备技能、年限与学历等筛选标准。</p></div><div class="drop-actions"><button class="outline" onclick="demoAdd('jd')">选择文件</button><div class="hint">PDF、DOCX · 最大 10MB</div></div></div>
+            <div class="drop"><div class="drop-icon">▤</div><div><h2>上传岗位描述（JD）</h2><p>请上传 1 份岗位说明书，我们将提取职责、必备技能、年限与学历等筛选标准。</p></div><div class="drop-actions"><button class="outline" onclick="demoAdd('jd')">选择文件</button><div class="hint">PDF、DOC、DOCX · 最大 10MB</div></div></div>
             <div class="sample-picker" data-type="jd"><div class="sample-picker-head"><span>或从样例中选择</span><button type="button" class="text-link sample-shuffle" data-type="jd">换一批</button></div><div class="sample-chips" id="jd-sample-chips"></div></div>
             <div class="file-list" id="jd-file"><p class="file-empty">尚未选择 JD 文件</p></div>
-            <div class="drop"><div class="drop-icon">▥</div><div><h2>上传候选人简历</h2><p>可一次选择多份简历。每份文件会单独解析并基于同一个 JD 打分。</p></div><div class="drop-actions"><button class="outline" onclick="demoAdd('resume')">添加简历</button><div class="hint">PDF、DOCX · 最多 20 份</div></div></div>
+            <div class="drop"><div class="drop-icon">▥</div><div><h2>上传候选人简历</h2><p>可一次选择多份简历。每份文件会单独解析并基于同一个 JD 打分。</p></div><div class="drop-actions"><button class="outline" onclick="demoAdd('resume')">添加简历</button><div class="hint">PDF、DOC、DOCX · 最多 20 份</div></div></div>
             <div class="sample-picker" data-type="resume"><div class="sample-picker-head"><span>或从样例中选择</span><button type="button" class="text-link sample-shuffle" data-type="resume">换一批</button></div><div class="sample-chips" id="resume-sample-chips"></div></div>
             <div class="file-list" id="resume-files"><p class="file-empty">尚未选择简历</p></div>
-            <input id="jd-input" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
-            <input id="resume-input" type="file" multiple accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
+            <input id="jd-input" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
+            <input id="resume-input" type="file" multiple accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
             <div class="submit-row" id="submit-row">
               <button class="outline" id="view-demo-results" type="button">查看示例结果</button>
               <button class="primary" id="start-screening">一键解析 →</button>

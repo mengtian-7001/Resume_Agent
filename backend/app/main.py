@@ -62,7 +62,7 @@ app.add_middleware(
     allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type", "X-Internal-Token"],
+    allow_headers=["Authorization", "Content-Type", "X-Internal-Token"],
 )
 
 

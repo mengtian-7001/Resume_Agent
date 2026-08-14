@@ -275,9 +275,10 @@ async function startScreening(supabase) {
     for (const document of docs) {
       validateFile(document.file);
       const path = `${config.workspaceId}/${job.id}/${document.type}/${crypto.randomUUID()}-${safeFilename(document.file.name)}`;
+      const mimeType = documentMime(document.file);
       const { error: storageError } = await supabase.storage
         .from("screening-documents")
-        .upload(path, document.file, { contentType: document.file.type, upsert: false });
+        .upload(path, document.file, { contentType: mimeType, upsert: false });
       if (storageError) throw storageError;
       uploadedPaths.push(path);
 
@@ -287,7 +288,7 @@ async function startScreening(supabase) {
         document_type: document.type,
         original_filename: document.file.name,
         storage_path: path,
-        mime_type: document.file.type,
+        mime_type: mimeType,
         size_bytes: document.file.size,
         status: "validated",
       });
@@ -330,10 +331,19 @@ async function startScreening(supabase) {
 function validateFile(file) {
   const allowed = [
     "application/pdf",
+    "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   ];
-  if (!allowed.includes(file.type)) throw new Error(`${file.name} 不是 PDF 或 DOCX 文件。`);
+  if (!allowed.includes(documentMime(file))) throw new Error(`${file.name} 不是 PDF、DOC 或 DOCX 文件。`);
   if (file.size > 10 * 1024 * 1024) throw new Error(`${file.name} 超过 10MB 限制。`);
+}
+
+function documentMime(file) {
+  const name = String(file?.name || "").toLowerCase();
+  if (name.endsWith(".pdf")) return "application/pdf";
+  if (name.endsWith(".docx")) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  if (name.endsWith(".doc")) return "application/msword";
+  return String(file?.type || "").toLowerCase();
 }
 
 function resetUploadLists() {
@@ -353,7 +363,8 @@ function renderFiles() {
 }
 
 function fileMarkup(file) {
-  const ext = file.name.endsWith(".docx") ? "DOCX" : "PDF";
+  const lower = file.name.toLowerCase();
+  const ext = lower.endsWith(".docx") ? "DOCX" : lower.endsWith(".doc") ? "DOC" : "PDF";
   return `<div class="file file-pending"><div class="filetype">${ext}</div><div class="file-name">${escapeHtml(file.name)}<span>${Math.ceil(file.size / 1024)} KB · 待提交</span></div></div>`;
 }
 

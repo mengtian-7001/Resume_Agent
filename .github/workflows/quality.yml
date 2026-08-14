@@ -19,6 +19,10 @@ jobs:
         with:
           node-version: "22"
           cache: npm
+      - name: Install legacy Word converter
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libreoffice-writer
       - name: Install browser test dependencies
         run: npm ci
       - name: Run unit and document evaluation gates

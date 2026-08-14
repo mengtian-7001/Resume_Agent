@@ -9,6 +9,7 @@ const publicConfig = {
   anonKey: (env.SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY || "").trim(),
   workspaceId: env.SUPABASE_WORKSPACE_ID?.trim() || "",
   allowAnonymousBootstrap: /^(1|true|yes)$/i.test(env.ALLOW_ANONYMOUS_BOOTSTRAP || "false"),
+  ...(env.PUBLIC_WORKER_URL?.trim() ? { workerUrl: env.PUBLIC_WORKER_URL.trim().replace(/\/$/, "") } : {}),
 };
 
 const required = {

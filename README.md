@@ -60,7 +60,7 @@ flowchart LR
 
 | 招聘痛点 | 技术解法 |
 | --- | --- |
-| PDF/DOCX 信息分散、字段不统一 | 文档解析后形成 JD 要求、候选人画像、Claim 与 Evidence 结构 |
+| PDF/DOC/DOCX 信息分散、字段不统一 | 文档解析后形成 JD 要求、候选人画像、Claim 与 Evidence 结构；扫描 PDF 自动 OCR |
 | 关键词相同不等于真实胜任 | 技能同义归一 + 硬门槛 + 项目/生产证据混合评分 |
 | AI 结论容易夸大或归因错误 | 独立 Checker 校验证据、分数、结论和题目，并回传一次修订 |
 | 面试官难以验证简历模糊表述 | 每位候选人生成至少 10 道结构化面试题和 3–5 个证据追问 |
@@ -205,7 +205,7 @@ Supabase 继续保存原文件、权限、审计和 Agent 状态；Neo4j 保存 
 ## 数据与安全边界
 
 - JD 和简历保存在私有 `screening-documents` Bucket，访问经由 RLS 与签名 URL。
-- 单文件只接受 PDF/DOCX，最大 10MB；服务端用文件魔数与 DOCX ZIP 结构再次校验，并拒绝解压膨胀异常的包。
+- 单文件接受 PDF/DOC/DOCX，最大 10MB；服务端用文件魔数、DOCX ZIP 结构和 DOC OLE `WordDocument` 流再次校验。普通 PDF 直接读取文字层，缺少文字层的页面自动使用离线中英文 OCR；单个 PDF 最多 60 页，其中 OCR 页面最多 30 页。
 - 本地 Demo（`./dev.sh`）通过 loopback `/dev/jobs/process` 触发 Worker，**不会**把 `INTERNAL_API_TOKEN` 写入浏览器可读配置。
 - 处理中任务带 `lease_expires_at` 与不可预测的 `lease_token`：Worker 崩溃或平台超时后可被重新领取；失去租约的旧 Worker 不能完成、失败或续租新 owner 的任务。
 - 表按 `workspace_id` 启用 RLS，浏览器不能跨工作区读取候选人数据。

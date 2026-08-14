@@ -1098,7 +1098,7 @@ class ScreeningWorker:
         raw = self.client.storage.from_(BUCKET).download(document["storage_path"])
         text = extract_document_text(raw, document["mime_type"])
         if len(text.strip()) < 30:
-            raise ValueError("文件无法提取足够的文本，请上传包含可复制文字的 PDF 或 DOCX。")
+            raise ValueError("文件无法提取足够的文本，请上传清晰的 PDF、DOC 或 DOCX。")
         self.client.table("documents").update(
             {
                 "status": "parsed",

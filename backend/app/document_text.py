@@ -2,10 +2,18 @@
 
 from __future__ import annotations
 
+import os
+import shutil
+import subprocess
+import threading
 import zipfile
+from functools import lru_cache
 from io import BytesIO
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import fitz
+import olefile
 from docx import Document as DocxDocument
 from docx.oxml.ns import qn
 from docx.table import Table
@@ -13,6 +21,16 @@ from docx.text.paragraph import Paragraph
 
 PDF_MIME = "application/pdf"
 DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+DOC_MIME = "application/msword"
+
+_OLE_MAGIC = b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"
+_MAX_DOCUMENT_BYTES = 10 * 1024 * 1024
+_MAX_PDF_PAGES = 60
+_MAX_OCR_PAGES = 30
+_MIN_PAGE_TEXT_CHARS = 24
+_MAX_PDF_EDGE_POINTS = 2000
+_DOC_CONVERT_TIMEOUT_SEC = 45
+_OCR_LOCK = threading.Lock()
 
 # Reject pathological DOCX (zip bombs / oversized members) before python-docx parses.
 _MAX_DOCX_UNCOMPRESSED = 40 * 1024 * 1024
@@ -34,6 +52,13 @@ def detect_document_mime(raw: bytes) -> str | None:
                     return DOCX_MIME
         except zipfile.BadZipFile:
             return None
+    if len(raw) >= len(_OLE_MAGIC) and raw[: len(_OLE_MAGIC)] == _OLE_MAGIC:
+        try:
+            with olefile.OleFileIO(BytesIO(raw)) as ole:
+                if ole.exists("WordDocument"):
+                    return DOC_MIME
+        except (OSError, IOError, olefile.OleFileError):
+            return None
     return None
 
 
@@ -42,6 +67,8 @@ def assert_safe_document(raw: bytes, declared_mime: str | None = None) -> str:
     Validate bytes against magic / ZIP structure and optional declared MIME.
     Returns the detected MIME. Raises ValueError on mismatch or unsafe archives.
     """
+    if len(raw) > _MAX_DOCUMENT_BYTES:
+        raise ValueError("文件超过 10MB 限制。")
     detected = detect_document_mime(raw)
     if detected is None:
         raise ValueError("无法识别文件类型，请上传真实的 PDF 或 DOCX。")
@@ -56,6 +83,7 @@ def assert_safe_document(raw: bytes, declared_mime: str | None = None) -> str:
                 "application/msword",
                 "application/zip",
             },
+            DOC_MIME: {DOC_MIME, "application/x-msword", "application/octet-stream"},
         }
         if declared not in aliases.get(detected, {detected}):
             raise ValueError(
@@ -70,14 +98,129 @@ def assert_safe_document(raw: bytes, declared_mime: str | None = None) -> str:
 def extract_document_text(raw: bytes, mime_type: str) -> str:
     detected = assert_safe_document(raw, mime_type)
     if detected == PDF_MIME:
-        pdf = fitz.open(stream=raw, filetype="pdf")
-        try:
-            return "\n".join(page.get_text() for page in pdf)
-        finally:
-            pdf.close()
+        return _extract_pdf_text(raw)
     if detected == DOCX_MIME:
         return _extract_docx_text(raw)
+    if detected == DOC_MIME:
+        return _extract_legacy_doc_text(raw)
     raise ValueError("不支持的文件格式")
+
+
+def _extract_pdf_text(raw: bytes) -> str:
+    """Extract selectable PDF text and OCR only pages with no useful text layer."""
+    pdf = fitz.open(stream=raw, filetype="pdf")
+    try:
+        if pdf.page_count > _MAX_PDF_PAGES:
+            raise ValueError(f"PDF 页数超过 {_MAX_PDF_PAGES} 页限制。")
+        chunks: list[str] = []
+        ocr_pages = 0
+        for page in pdf:
+            if page.rect.width > _MAX_PDF_EDGE_POINTS or page.rect.height > _MAX_PDF_EDGE_POINTS:
+                raise ValueError("PDF 页面尺寸异常，已拒绝解析。")
+            text = (page.get_text("text") or "").strip()
+            meaningful = sum(1 for char in text if char.isalnum())
+            if meaningful < _MIN_PAGE_TEXT_CHARS:
+                ocr_pages += 1
+                if ocr_pages > _MAX_OCR_PAGES:
+                    raise ValueError(f"需要 OCR 的页面超过 {_MAX_OCR_PAGES} 页限制。")
+                ocr_text = _ocr_pdf_page(page)
+                if ocr_text.strip():
+                    text = "\n".join(part for part in (text, ocr_text) if part.strip())
+            if text:
+                chunks.append(text)
+        return "\n".join(chunks)
+    finally:
+        pdf.close()
+
+
+@lru_cache(maxsize=1)
+def _ocr_engine():
+    try:
+        from rapidocr import RapidOCR
+    except ImportError as exc:  # pragma: no cover - guarded by locked requirements
+        raise ValueError("OCR 组件未安装，无法解析扫描版 PDF。") from exc
+    return RapidOCR()
+
+
+def _ocr_pdf_page(page: fitz.Page) -> str:
+    """Render one page at 200 DPI and run offline Chinese/English OCR."""
+    try:
+        image = page.get_pixmap(dpi=200, alpha=False).tobytes("png")
+        # ONNX sessions are cached across tasks; serialize calls for predictable
+        # memory use when resume parsing fans out across candidates.
+        with _OCR_LOCK:
+            result = _ocr_engine()(image)
+        texts = getattr(result, "txts", None) or []
+        return "\n".join(str(item).strip() for item in texts if str(item).strip())
+    except ValueError:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise ValueError(f"扫描版 PDF OCR 失败：{str(exc)[:160]}") from exc
+
+
+def _extract_legacy_doc_text(raw: bytes) -> str:
+    """Convert a validated Word 97-2003 document to plain text.
+
+    LibreOffice is used on Linux/Docker; macOS can fall back to the built-in
+    ``textutil`` command. The conversion happens in an isolated temporary
+    directory and is bounded by a hard timeout.
+    """
+    with TemporaryDirectory(prefix="resume-agent-doc-") as temp_dir:
+        root = Path(temp_dir)
+        source = root / "input.doc"
+        source.write_bytes(raw)
+
+        office = shutil.which("soffice") or shutil.which("libreoffice")
+        if office:
+            profile = root / "lo-profile"
+            profile.mkdir()
+            command = [
+                office,
+                "--headless",
+                "--nologo",
+                "--nodefault",
+                "--nolockcheck",
+                "--norestore",
+                f"-env:UserInstallation={profile.as_uri()}",
+                "--convert-to",
+                "txt:Text",
+                "--outdir",
+                str(root),
+                str(source),
+            ]
+            completed = subprocess.run(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=_DOC_CONVERT_TIMEOUT_SEC,
+                check=False,
+            )
+            output = root / "input.txt"
+            if completed.returncode == 0 and output.exists():
+                return _decode_converted_text(output.read_bytes())
+
+        textutil = shutil.which("textutil")
+        if textutil:
+            completed = subprocess.run(
+                [textutil, "-convert", "txt", "-stdout", str(source)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=_DOC_CONVERT_TIMEOUT_SEC,
+                check=False,
+            )
+            if completed.returncode == 0 and completed.stdout:
+                return _decode_converted_text(completed.stdout)
+
+    raise ValueError("旧版 DOC 转换器不可用；请在 Worker 安装 LibreOffice Writer。")
+
+
+def _decode_converted_text(raw: bytes) -> str:
+    for encoding in ("utf-8", "utf-16", "gb18030"):
+        try:
+            return raw.decode(encoding).strip()
+        except UnicodeDecodeError:
+            continue
+    return raw.decode("utf-8", errors="replace").strip()
 
 
 def _assert_docx_zip_bounds(raw: bytes) -> None:
