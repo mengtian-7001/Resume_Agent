@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, cpSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const outputPath = resolve(process.cwd(), "supabase-config.js");
@@ -55,6 +55,7 @@ if (env.VERCEL) {
   for (const asset of publicAssets) {
     copyFileSync(resolve(process.cwd(), asset), resolve(publicDir, asset));
   }
+  cpSync(resolve(process.cwd(), "samples"), resolve(publicDir, "samples"), { recursive: true });
   writeFileSync(resolve(publicDir, "supabase-config.js"), output, { encoding: "utf8", mode: 0o600 });
 }
 
