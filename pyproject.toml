@@ -1,0 +1,14 @@
+[project]
+name = "resume-agent"
+version = "1.0.0"
+requires-python = ">=3.12,<3.13"
+# Vercel Function dependency set. The Docker Worker continues to install
+# backend/requirements.txt, which adds RapidOCR, ONNX Runtime, Neo4j, and
+# LibreOffice for scanned PDFs and legacy .doc files.
+dependencies = [
+  "fastapi==0.128.8",
+  "supabase==2.31.0",
+  "pydantic==2.13.4",
+  "pydantic-settings==2.11.0",
+  "httpx==0.28.1",
+]

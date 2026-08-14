@@ -11,13 +11,7 @@ from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
-
-import fitz
-import olefile
-from docx import Document as DocxDocument
-from docx.oxml.ns import qn
-from docx.table import Table
-from docx.text.paragraph import Paragraph
+from typing import Any
 
 PDF_MIME = "application/pdf"
 DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -53,6 +47,12 @@ def detect_document_mime(raw: bytes) -> str | None:
         except zipfile.BadZipFile:
             return None
     if len(raw) >= len(_OLE_MAGIC) and raw[: len(_OLE_MAGIC)] == _OLE_MAGIC:
+        try:
+            import olefile
+        except ImportError:
+            # The lightweight Vercel API delegates document parsing to the
+            # Docker Worker, where the full parser dependency set is installed.
+            return None
         try:
             with olefile.OleFileIO(BytesIO(raw)) as ole:
                 if ole.exists("WordDocument"):
@@ -108,6 +108,11 @@ def extract_document_text(raw: bytes, mime_type: str) -> str:
 
 def _extract_pdf_text(raw: bytes) -> str:
     """Extract selectable PDF text and OCR only pages with no useful text layer."""
+    try:
+        import fitz
+    except ImportError as exc:
+        raise ValueError("PDF 解析组件未安装，请使用独立 Worker。") from exc
+
     pdf = fitz.open(stream=raw, filetype="pdf")
     try:
         if pdf.page_count > _MAX_PDF_PAGES:
@@ -142,7 +147,7 @@ def _ocr_engine():
     return RapidOCR()
 
 
-def _ocr_pdf_page(page: fitz.Page) -> str:
+def _ocr_pdf_page(page: Any) -> str:
     """Render one page at 200 DPI and run offline Chinese/English OCR."""
     try:
         image = page.get_pixmap(dpi=200, alpha=False).tobytes("png")
@@ -245,6 +250,13 @@ def _assert_docx_zip_bounds(raw: bytes) -> None:
 
 def _extract_docx_text(raw: bytes) -> str:
     """Read body paragraphs + tables (incl. nested), plus header/footer text."""
+    try:
+        from docx import Document as DocxDocument
+        from docx.table import Table
+        from docx.text.paragraph import Paragraph
+    except ImportError as exc:
+        raise ValueError("DOCX 解析组件未安装，请使用独立 Worker。") from exc
+
     document = DocxDocument(BytesIO(raw))
     chunks: list[str] = []
 
@@ -277,6 +289,10 @@ def _extract_docx_text(raw: bytes) -> str:
 
 def _iter_block_items(parent):
     """Yield paragraphs and tables in document order (python-docx recipe)."""
+    from docx.oxml.ns import qn
+    from docx.table import Table
+    from docx.text.paragraph import Paragraph
+
     body = parent.element.body
     for child in body.iterchildren():
         if child.tag == qn("w:p"):
@@ -285,7 +301,7 @@ def _iter_block_items(parent):
             yield Table(child, parent)
 
 
-def _table_text(table: Table) -> str:
+def _table_text(table: Any) -> str:
     rows: list[str] = []
     for row in table.rows:
         cells: list[str] = []

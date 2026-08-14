@@ -1,7 +1,7 @@
 .DS_Store
 backend/.env
 backend/.venv/
-backend/**/__pycache__/
+**/__pycache__/
 supabase-config.local.js
 supabase-config.worker.js
 supabase-config.js

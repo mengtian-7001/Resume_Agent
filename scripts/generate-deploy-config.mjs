@@ -1,8 +1,9 @@
-import { existsSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const outputPath = resolve(process.cwd(), "supabase-config.js");
 const env = process.env;
+const publicDir = resolve(process.cwd(), "public");
 
 const publicConfig = {
   url: env.SUPABASE_URL?.trim() || "",
@@ -39,6 +40,23 @@ if (publicConfig.allowAnonymousBootstrap && env.VERCEL_ENV === "production") {
 const serialized = JSON.stringify(publicConfig, null, 2).replaceAll("<", "\\u003c");
 const output = `// Generated at deploy time. Do not edit or commit this file.\nwindow.SUPABASE_CONFIG = ${serialized};\n`;
 writeFileSync(outputPath, output, { encoding: "utf8", mode: 0o600 });
+
+if (env.VERCEL) {
+  mkdirSync(publicDir, { recursive: true });
+  const publicAssets = [
+    "index.html",
+    "frontend.js",
+    "frontend-agent-chain.js",
+    "frontend-checker.js",
+    "frontend-feedback.js",
+    "interview-workspace.js",
+    "README.md",
+  ];
+  for (const asset of publicAssets) {
+    copyFileSync(resolve(process.cwd(), asset), resolve(publicDir, asset));
+  }
+  writeFileSync(resolve(publicDir, "supabase-config.js"), output, { encoding: "utf8", mode: 0o600 });
+}
 
 console.log(
   configuredCount === Object.keys(required).length

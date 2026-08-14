@@ -3,8 +3,7 @@
   "buildCommand": "npm run build",
   "functions": {
     "api/index.py": {
-      "maxDuration": 300,
-      "includeFiles": "backend/**"
+      "maxDuration": 300
     }
   },
   "rewrites": [
