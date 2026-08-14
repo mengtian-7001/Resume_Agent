@@ -10,7 +10,7 @@ os.environ.setdefault("SUPABASE_URL", "https://example.supabase.co")
 os.environ.setdefault("SUPABASE_SERVICE_ROLE_KEY", "test-service-role")
 os.environ.setdefault("INTERNAL_API_TOKEN", "test-internal-token")
 
-from backend.app import main  # noqa: E402
+from app import main  # noqa: E402
 
 
 class _FakeTable:
