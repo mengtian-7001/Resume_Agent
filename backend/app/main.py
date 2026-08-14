@@ -6,6 +6,7 @@ import threading
 import time
 from contextlib import asynccontextmanager
 from typing import Optional
+from uuid import NAMESPACE_URL, uuid5
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -91,14 +92,35 @@ def _ensure_local_dev(request: Request, config: Settings) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Local dev only")
 
 
-def _require_job_owner(job_id: str, authorization: Optional[str]) -> None:
+def _authenticated_user(authorization: Optional[str], worker: ScreeningWorker):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing user token")
-    worker = ScreeningWorker()
     try:
         user = worker.client.auth.get_user(authorization.removeprefix("Bearer ").strip()).user
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user token") from exc
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user token")
+    return user
+
+
+def _is_anonymous_user(user: object) -> bool:
+    direct = getattr(user, "is_anonymous", None)
+    if direct is not None:
+        return bool(direct)
+    metadata = getattr(user, "app_metadata", None) or {}
+    provider = metadata.get("provider") if isinstance(metadata, dict) else None
+    providers = metadata.get("providers", []) if isinstance(metadata, dict) else []
+    return provider == "anonymous" or "anonymous" in providers
+
+
+def _anonymous_workspace_id(user_id: str) -> str:
+    return str(uuid5(NAMESPACE_URL, f"resume-agent:anonymous:{user_id}"))
+
+
+def _require_job_owner(job_id: str, authorization: Optional[str]) -> None:
+    worker = ScreeningWorker()
+    user = _authenticated_user(authorization, worker)
     job = (
         worker.client.table("screening_jobs")
         .select("id,created_by")
@@ -152,6 +174,27 @@ def health() -> dict[str, str]:
         "construction": construction,
         "checker": checker,
     }
+
+
+@app.post("/session/bootstrap")
+def bootstrap_anonymous_session(authorization: Optional[str] = Header(default=None)) -> dict[str, str]:
+    """Provision one private workspace for an authenticated anonymous visitor."""
+    worker = ScreeningWorker()
+    user = _authenticated_user(authorization, worker)
+    if not _is_anonymous_user(user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Anonymous session required")
+
+    user_id = str(user.id)
+    workspace_id = _anonymous_workspace_id(user_id)
+    worker.client.table("workspaces").upsert(
+        {"id": workspace_id, "name": f"匿名体验 {user_id[:8]}"},
+        on_conflict="id",
+    ).execute()
+    worker.client.table("workspace_members").upsert(
+        {"workspace_id": workspace_id, "user_id": user_id, "role": "recruiter"},
+        on_conflict="workspace_id,user_id",
+    ).execute()
+    return {"workspace_id": workspace_id, "mode": "anonymous"}
 
 
 @app.post("/internal/tasks/run-once", dependencies=[Depends(require_internal_token)])

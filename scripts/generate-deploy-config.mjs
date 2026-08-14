@@ -9,7 +9,9 @@ const publicConfig = {
   url: env.SUPABASE_URL?.trim() || "",
   anonKey: (env.SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY || "").trim(),
   workspaceId: env.SUPABASE_WORKSPACE_ID?.trim() || "",
-  allowAnonymousBootstrap: /^(1|true|yes)$/i.test(env.ALLOW_ANONYMOUS_BOOTSTRAP || "false"),
+  // Vercel is the public demo: each visitor gets an isolated anonymous workspace.
+  allowAnonymousBootstrap: Boolean(env.VERCEL)
+    || /^(1|true|yes)$/i.test(env.ALLOW_ANONYMOUS_BOOTSTRAP || "false"),
   ...(env.PUBLIC_WORKER_URL?.trim() ? { workerUrl: env.PUBLIC_WORKER_URL.trim().replace(/\/$/, "") } : {}),
 };
 
@@ -31,10 +33,6 @@ if (configuredCount > 0 && configuredCount < Object.keys(required).length) {
 if (configuredCount === 0 && existsSync(outputPath) && !env.VERCEL) {
   console.log("Keeping the existing local supabase-config.js.");
   process.exit(0);
-}
-
-if (publicConfig.allowAnonymousBootstrap && env.VERCEL_ENV === "production") {
-  throw new Error("ALLOW_ANONYMOUS_BOOTSTRAP must be false in production.");
 }
 
 const serialized = JSON.stringify(publicConfig, null, 2).replaceAll("<", "\\u003c");

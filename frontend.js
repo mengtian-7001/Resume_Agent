@@ -97,9 +97,8 @@ async function initializeSession(supabase) {
     user = data.user;
   }
 
-  if (user && config.allowAnonymousBootstrap === true) {
-    const { error: membershipError } = await bootstrapWorkspaceMembership(supabase);
-    if (membershipError) throw membershipError;
+  if (user?.is_anonymous && config.allowAnonymousBootstrap === true) {
+    config.workspaceId = await bootstrapAnonymousWorkspace(supabase);
   } else if (!user && statusNode) {
     statusNode.textContent = "生产模式：请点击右上角账户按钮，使用邮箱密码登录工作区成员账号。";
   }
@@ -107,17 +106,22 @@ async function initializeSession(supabase) {
   return user;
 }
 
-async function bootstrapWorkspaceMembership(supabase) {
-  const fixed = await supabase.rpc("bootstrap_anonymous_workspace");
-  if (!fixed.error) return fixed;
-
-  const missingRpc = fixed.error.code === "PGRST202"
-    || fixed.error.message?.includes("schema cache");
-  if (!missingRpc) return fixed;
-
-  return supabase.rpc("bootstrap_anonymous_workspace", {
-    target_workspace_id: config.workspaceId,
+async function bootstrapAnonymousWorkspace(supabase) {
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session?.access_token) {
+    throw new Error("匿名会话初始化失败，请刷新页面重试。");
+  }
+  const response = await fetch(`${workerBaseUrl().replace(/\/$/, "")}/session/bootstrap`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${data.session.access_token}` },
   });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.detail || "无法创建匿名体验工作区，请稍后重试。");
+  }
+  const body = await response.json();
+  if (!body.workspace_id) throw new Error("匿名体验工作区响应无效。");
+  return body.workspace_id;
 }
 
 function wireAuth(sessionReady) {
@@ -136,7 +140,7 @@ function wireAuth(sessionReady) {
     }
     const label = user.email || (user.is_anonymous ? "匿名会话" : (user.id || "").slice(0, 8));
     name.textContent = label;
-    role.textContent = user.is_anonymous ? "本地招聘工作区" : "工作区成员";
+    role.textContent = user.is_anonymous ? "匿名体验工作区" : "工作区成员";
     action.disabled = false;
     action.setAttribute("aria-label", user.is_anonymous ? "匿名会话已就绪" : "账户菜单");
   };
@@ -154,7 +158,7 @@ function wireAuth(sessionReady) {
       return;
     }
     if (user?.is_anonymous && config.allowAnonymousBootstrap === true) {
-      window.alert("本地 Demo 使用匿名会话，无需邮箱登录。");
+      window.alert("当前为匿名体验会话，无需邮箱登录。");
       return;
     }
     const email = window.prompt("工作区成员邮箱：");

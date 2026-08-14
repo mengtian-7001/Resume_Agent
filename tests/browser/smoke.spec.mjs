@@ -107,6 +107,77 @@ test("live upload keeps selected files and clearly asks unauthenticated users to
   expect(errors).toEqual([]);
 });
 
+test("public deployment automatically opens an isolated anonymous workspace", async ({ page }) => {
+  const workspaceId = "8d4874a6-33d0-4ae8-bdb8-48f27daf6715";
+  await page.unroute("**/supabase-config.js");
+  await page.route("**/supabase-config.js", (route) =>
+    route.fulfill({
+      contentType: "application/javascript",
+      body: `window.SUPABASE_CONFIG = {
+        url: "https://example.supabase.co",
+        anonKey: "test-publishable-key",
+        workspaceId: "shared-placeholder",
+        allowAnonymousBootstrap: true
+      };`,
+    }),
+  );
+  await page.route("https://esm.sh/**", (route) =>
+    route.fulfill({
+      contentType: "application/javascript",
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: `
+        let user = null;
+        let session = null;
+        const emptyResult = { data: [], error: null };
+        function query() {
+          let proxy;
+          proxy = new Proxy({}, {
+            get(_target, key) {
+              if (key === "then") return (resolve, reject) => Promise.resolve(emptyResult).then(resolve, reject);
+              return () => proxy;
+            }
+          });
+          return proxy;
+        }
+        export function createClient() {
+          return {
+            auth: {
+              getUser: async () => ({ data: { user } }),
+              getSession: async () => ({ data: { session }, error: null }),
+              signInAnonymously: async () => {
+                user = { id: "anonymous-user", is_anonymous: true };
+                session = { access_token: "anonymous-token" };
+                return { data: { user, session }, error: null };
+              }
+            },
+            from: () => query(),
+            rpc: async () => emptyResult,
+            storage: { from: () => ({}) }
+          };
+        }
+      `,
+    }),
+  );
+  await page.route("**/session/bootstrap", (route) =>
+    route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ workspace_id: workspaceId, mode: "anonymous" }),
+    }),
+  );
+  await page.route("**/api/health", (route) =>
+    route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({ status: "ok", construction: "OpenAIConstructionAgent", checker: "OpenAICheckerAgent" }),
+    }),
+  );
+
+  await page.goto("/index.html");
+  await expect(page.getByRole("button", { name: "匿名会话已就绪" })).toBeVisible();
+  await expect(page.locator("#account-name")).toHaveText("匿名会话");
+  await expect(page.locator("#account-role")).toHaveText("匿名体验工作区");
+  await expect.poll(() => page.evaluate(() => window.SUPABASE_CONFIG.workspaceId)).toBe(workspaceId);
+});
+
 test("interview workspace records and restores candidate answers and scores", async ({ page }) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
