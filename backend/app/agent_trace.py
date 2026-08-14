@@ -97,12 +97,19 @@ class AgentRunTracer:
         state = dict((existing or {}).get("state") or {})
         steps = list(state.get("steps") or [])
         # Update in-place if same id is still running; else append.
+        # Parallel candidates can share a logical step id unless the worker
+        # suffixes candidate_id, so never merge across different people.
         updated = False
+        step_cid = step.get("candidate_id")
         for index, prior in enumerate(steps):
-            if prior.get("id") == step.get("id") and prior.get("status") == "running":
-                steps[index] = {**prior, **step}
-                updated = True
-                break
+            if prior.get("id") != step.get("id") or prior.get("status") != "running":
+                continue
+            prior_cid = prior.get("candidate_id")
+            if prior_cid and step_cid and prior_cid != step_cid:
+                continue
+            steps[index] = {**prior, **step}
+            updated = True
+            break
         if not updated:
             steps.append(step)
         state["steps"] = steps
@@ -133,6 +140,7 @@ class AgentRunTracer:
         existing = self._fetch(screening_job_id)
         state = dict((existing or {}).get("state") or {})
         state["stage"] = "completed"
+        state.pop("failure_reason", None)
         if merge_state:
             state.update(merge_state)
         self.client.table("agent_runs").upsert(
@@ -140,6 +148,36 @@ class AgentRunTracer:
                 "workspace_id": workspace_id,
                 "screening_job_id": screening_job_id,
                 "status": "completed",
+                "mode": self.agent_mode,
+                "state": state,
+                "completed_at": _now(),
+                "started_at": (existing or {}).get("started_at") or _now(),
+            },
+            on_conflict="screening_job_id",
+        ).execute()
+
+    def fail(
+        self,
+        workspace_id: str,
+        screening_job_id: str,
+        *,
+        reason: str | None = None,
+        merge_state: Optional[dict[str, Any]] = None,
+    ) -> None:
+        """Mark the agent run failed. Never writes status/stage=completed."""
+        existing = self._fetch(screening_job_id)
+        state = dict((existing or {}).get("state") or {})
+        state["stage"] = "failed"
+        state["failed"] = True
+        if reason:
+            state["failure_reason"] = reason[:500]
+        if merge_state:
+            state.update(merge_state)
+        self.client.table("agent_runs").upsert(
+            {
+                "workspace_id": workspace_id,
+                "screening_job_id": screening_job_id,
+                "status": "failed",
                 "mode": self.agent_mode,
                 "state": state,
                 "completed_at": _now(),

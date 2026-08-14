@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "protocol": "heldout_doc_v1",
+  "description": "Held-out document eval: labels live only here; runner parses DOCX/PDF and must not read structured generator fields. Leak phrases are stripped from extracted text before scoring.",
+  "decision_map": {
+    "recommend": "recommend",
+    "gray": "review",
+    "review": "review",
+    "reject": "reject"
+  },
+  "pairs": [
+    {"jd_id": "JD_001", "resume_id": "CV_003", "expected": "recommend"},
+    {"jd_id": "JD_001", "resume_id": "CV_004", "expected": "review"},
+    {"jd_id": "JD_001", "resume_id": "CV_007", "expected": "reject"},
+    {"jd_id": "JD_002", "resume_id": "CV_013", "expected": "recommend"},
+    {"jd_id": "JD_002", "resume_id": "CV_015", "expected": "review"},
+    {"jd_id": "JD_002", "resume_id": "CV_018", "expected": "reject"},
+    {"jd_id": "JD_003", "resume_id": "CV_021", "expected": "recommend"},
+    {"jd_id": "JD_003", "resume_id": "CV_024", "expected": "review"},
+    {"jd_id": "JD_003", "resume_id": "CV_027", "expected": "reject"},
+    {"jd_id": "JD_004", "resume_id": "CV_033", "expected": "recommend"},
+    {"jd_id": "JD_004", "resume_id": "CV_036", "expected": "review"},
+    {"jd_id": "JD_004", "resume_id": "CV_037", "expected": "reject"},
+    {"jd_id": "JD_005", "resume_id": "CV_043", "expected": "recommend"},
+    {"jd_id": "JD_005", "resume_id": "CV_045", "expected": "review"},
+    {"jd_id": "JD_005", "resume_id": "CV_047", "expected": "reject"},
+    {"jd_id": "JD_006", "resume_id": "CV_051", "expected": "recommend"},
+    {"jd_id": "JD_006", "resume_id": "CV_054", "expected": "review"},
+    {"jd_id": "JD_006", "resume_id": "CV_058", "expected": "reject"}
+  ],
+  "leak_patterns": [
+    "应 reject",
+    "应 reject。",
+    "硬门槛失败",
+    "硬拒",
+    "关键字堆砌",
+    "关键词堆砌",
+    "即使关键字齐全也应",
+    "用于验证教育门槛",
+    "教育门槛回归样本",
+    "灰区",
+    "应进灰区",
+    "不可用实习凑三年",
+    "必拦",
+    "应因年限拒绝",
+    "应届口径不可放行"
+  ]
+}

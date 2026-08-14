@@ -15,6 +15,7 @@ import math
 import re
 from typing import Any
 
+from .evidence_registry import build_match_evidence
 from .screening_config import decide, evaluate_hard_gates, merge_screening_config
 from .skill_ontology import canonicalize_skill, canonicalize_skills, expand_text_skills
 
@@ -122,7 +123,12 @@ def lexical_overlap(jd_text: str, resume_text: str) -> float:
     return round(100.0 * (0.55 * coverage + 0.45 * jaccard), 2)
 
 
-def hybrid_text_score(jd_text: str, resume_text: str) -> dict[str, float]:
+def hybrid_text_score(
+    jd_text: str,
+    resume_text: str,
+    *,
+    embedder: Any | None = None,
+) -> dict[str, float | str]:
     """Match Skill diagram: semantic 60% + TF-IDF 40%; lower semantic when overlap is low."""
     jd_tokens = _token_list(jd_text)
     resume_tokens = _token_list(resume_text)
@@ -133,8 +139,17 @@ def hybrid_text_score(jd_text: str, resume_text: str) -> dict[str, float]:
         else 0.0
     )
 
-    # Offline semantic proxy: character n-gram cosine (no torch embeddings).
-    semantic = _cosine(_char_ngrams(jd_text, 3), _char_ngrams(resume_text, 3))
+    semantic_source = "ngram_proxy"
+    if embedder is not None:
+        try:
+            semantic, semantic_source = embedder.semantic_similarity(jd_text, resume_text)
+        except Exception:
+            semantic = _cosine(_char_ngrams(jd_text, 3), _char_ngrams(resume_text, 3))
+            semantic_source = "ngram_proxy"
+    else:
+        # Offline semantic proxy: character n-gram cosine (no torch embeddings).
+        semantic = _cosine(_char_ngrams(jd_text, 3), _char_ngrams(resume_text, 3))
+
     jd_tfidf, resume_tfidf = _tfidf_vectors(jd_tokens, resume_tokens)
     tfidf = _cosine(jd_tfidf, resume_tfidf)
 
@@ -148,6 +163,7 @@ def hybrid_text_score(jd_text: str, resume_text: str) -> dict[str, float]:
         "semantic": round(100.0 * semantic, 2),
         "tfidf": round(100.0 * tfidf, 2),
         "lexical_jaccard": round(jaccard, 4),
+        "semantic_source": semantic_source,
     }
 
 
@@ -249,18 +265,6 @@ def score_evidence(text: str) -> dict[str, Any]:
     }
 
 
-def lexical_overlap(jd_text: str, resume_text: str) -> float:
-    left = _tokenize(jd_text)
-    right = _tokenize(resume_text)
-    if not left or not right:
-        return 0.0
-    inter = len(left & right)
-    union = len(left | right)
-    jaccard = inter / union if union else 0.0
-    coverage = inter / len(left)
-    return round(100.0 * (0.55 * coverage + 0.45 * jaccard), 2)
-
-
 def match_profile(
     requirements: dict[str, Any],
     profile: dict[str, Any],
@@ -268,6 +272,7 @@ def match_profile(
     screening_config: dict[str, Any] | None = None,
     job_context: dict[str, Any] | None = None,
     score_llm: float | None = None,
+    embedder: Any | None = None,
 ) -> dict[str, Any]:
     config = merge_screening_config(screening_config)
     required = list(requirements.get("must_have_skills") or [])
@@ -311,7 +316,7 @@ def match_profile(
             str(requirements.get("raw_text") or ""),
         ]
     )
-    text_parts = hybrid_text_score(jd_text, resume_text)
+    text_parts = hybrid_text_score(jd_text, resume_text, embedder=embedder)
     text_score = float(text_parts["score"])
     evidence = score_evidence(resume_text)
     evidence_score = float(evidence["score"])
@@ -351,6 +356,12 @@ def match_profile(
     )
     llm_score = float(score_llm) if score_llm is not None else heuristic_llm
     llm_source = "llm_judge" if score_llm is not None else "heuristic_proxy"
+    # Bound LLM influence: cannot drift more than ±18 from the deterministic anchor.
+    if score_llm is not None:
+        clamped = max(deterministic - 18.0, min(deterministic + 18.0, llm_score))
+        if clamped != llm_score:
+            llm_source = "llm_judge_clamped"
+        llm_score = clamped
     total = round(0.60 * llm_score + 0.40 * deterministic, 2)
 
     years_ok = years >= min_years
@@ -361,20 +372,6 @@ def match_profile(
         required_coverage=required_score,
         config=config,
     )
-
-    # Product soft-landing: years/edu OK and ≥50% skills → allow review path.
-    if not hard_gate_pass and required_score >= 0.5 and years_ok and education_ok:
-        soft = merge_screening_config(
-            {"hard_gates": {**config.get("hard_gates", {}), "must_have_skills": {"enabled": False}}}
-        )
-        if evaluate_hard_gates(
-            years_ok=years_ok,
-            education_ok=education_ok,
-            required_coverage=required_score,
-            config=soft,
-        ):
-            hard_gate_pass = True
-            total = min(total, 72.0)
 
     # Fixture-aligned calibration bands (HireLens-style re-rank heuristics).
     weakish = bool(evidence["weak_cues"] or evidence["shallow_cues"])
@@ -413,28 +410,17 @@ def match_profile(
     if evidence["stuffing_cues"]:
         risks.append("疑似关键词堆砌")
 
-    evidence_rows = [
-        {
-            "type": "skills",
-            "text": f"匹配必备技能：{', '.join(matched_required) or '无'}"
-            + (f"；加分项命中：{', '.join(matched_preferred)}" if matched_preferred else ""),
-            "source": "resume",
-        },
-        {"type": "experience", "text": f"候选人 {years} 年经验，岗位要求 {min_years} 年", "source": "resume"},
-        {"type": "education", "text": f"候选人学历：{profile.get('education') or '未提及'}", "source": "resume"},
-    ]
-    if missing_required:
-        evidence_rows.append(
-            {"type": "skills_gap", "text": f"简历未直接体现：{', '.join(missing_required)}", "source": "resume"}
-        )
-    if evidence["production_cues"]:
-        evidence_rows.append(
-            {
-                "type": "evidence_quality",
-                "text": f"生产向证据信号：{', '.join(evidence['production_cues'][:4])}",
-                "source": "resume",
-            }
-        )
+    evidence_rows = build_match_evidence(
+        requirements=requirements,
+        profile=profile,
+        matched_required=matched_required,
+        matched_preferred=matched_preferred,
+        missing_required=missing_required,
+        years=years,
+        min_years=min_years,
+        production_cues=list(evidence["production_cues"] or []),
+        job_context=job_context,
+    )
 
     return {
         "score": round(total, 2),
@@ -450,9 +436,11 @@ def match_profile(
             "text": text_score,
             "text_semantic": text_parts["semantic"],
             "text_tfidf": text_parts["tfidf"],
+            "text_semantic_source": text_parts.get("semantic_source") or "ngram_proxy",
             "evidence": round(evidence_score, 2),
             "required_coverage": round(required_score * 100, 2),
             "preferred_coverage": round(preferred_score * 100, 2),
+            "missing_required": missing_required,
         },
         "evidence": evidence_rows,
         "risks": risks,
@@ -466,4 +454,7 @@ def match_profile(
         "matched_required": matched_required,
         "missing_required": missing_required,
         "matched_preferred": matched_preferred,
+        "source_profile_text": _join_profile_text(profile),
+        "source_jd_text": str(requirements.get("raw_text") or requirements.get("title") or ""),
+        "screening_config": config,
     }

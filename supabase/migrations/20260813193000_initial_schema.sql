@@ -186,6 +186,9 @@ begin
 end;
 $$;
 
+revoke all on function public.claim_processing_task() from public;
+grant execute on function public.claim_processing_task() to service_role;
+
 create or replace function public.start_screening(target_job_id uuid)
 returns void
 language plpgsql
@@ -316,6 +319,9 @@ begin
   return deleted_jobs;
 end;
 $$;
+
+revoke all on function public.purge_expired_screenings(integer) from public;
+grant execute on function public.purge_expired_screenings(integer) to service_role;
 
 alter table public.workspaces enable row level security;
 alter table public.workspace_members enable row level security;

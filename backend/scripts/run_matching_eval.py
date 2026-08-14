@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any
 
 from app.agents import MockCheckerAgent, MockConstructionAgent
+from app.checker_policy import apply_checker_review
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -100,7 +101,7 @@ def run(*, rounds: int = 1, max_mismatches: int = 30) -> dict[str, Any]:
                         }
                     )
 
-            actual = output.match_result["decision"]
+            actual = apply_checker_review(output.match_result["decision"], review)["decision"]
             expected = pair["expected"]
             evaluated += 1
             label_stats[pair["label"] or expected] += 1

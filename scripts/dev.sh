@@ -26,11 +26,12 @@ set -a
 source "$ENV_FILE"
 set +a
 
+# Never put INTERNAL_API_TOKEN in browser-readable JS. Localhost Demo uses /dev/jobs/process
+# (loopback-only). Production callers use session JWT → /api/jobs/process.
 cat > "$WORKER_OVERLAY" <<EOF
 // 由 scripts/dev.sh 自动生成，请勿提交到 Git。
 Object.assign(window.SUPABASE_CONFIG ||= {}, {
   workerUrl: "http://127.0.0.1:${WORKER_PORT}",
-  workerToken: "${INTERNAL_API_TOKEN}",
 });
 EOF
 

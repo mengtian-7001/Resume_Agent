@@ -66,10 +66,17 @@ class JobResearchService:
 
 
 def _clean_text(value: str) -> str:
-    """Strip common prompt-injection phrasing before storing web excerpts."""
+    """Mark untrusted web instructions; excerpts never serve as candidate evidence."""
     text = re.sub(r"\s+", " ", value).strip()
     text = re.sub(
-        r"(?i)(ignore (all |any )?(previous|above) instructions|system prompt|developer message)",
+        (
+            r"(?i)(ignore (all |any )?(previous|above) instructions|"
+            r"system prompt|developer message|jailbreak|"
+            r"忽略(?:之前|以上|前面)?(?:的)?(?:指令|要求)|"
+            r"无视(?:之前|以上)?(?:指令|要求)|"
+            r"(?:系统|开发者)(?:提示词|指令)|"
+            r"越狱|请输出(?:系统|隐藏)(?:提示词|指令))"
+        ),
         "[filtered]",
         text,
     )

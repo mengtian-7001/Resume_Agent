@@ -26,6 +26,8 @@ class FactGraph(Protocol):
         self, workspace_id: str, job_id: str, candidate_id: str, review: dict[str, Any]
     ) -> None: ...
 
+    def related_skills(self, workspace_id: str, job_id: str) -> list[str]: ...
+
     def close(self) -> None: ...
 
 
@@ -49,6 +51,9 @@ class NullFactGraph:
         self, workspace_id: str, job_id: str, candidate_id: str, review: dict[str, Any]
     ) -> None:
         return None
+
+    def related_skills(self, workspace_id: str, job_id: str) -> list[str]:
+        return []
 
     def close(self) -> None:
         return None
@@ -143,6 +148,17 @@ class Neo4jFactGraph:
             issues=review["issues"],
             model=review["model"],
         )
+
+    def related_skills(self, workspace_id: str, job_id: str) -> list[str]:
+        query = """
+        MATCH (:Job {workspace_id: $workspace_id, id: $job_id})-[:HAS_REQUIREMENT]->(:Requirement)-[:REQUIRES_SKILL]->(s:Skill)
+        RETURN DISTINCT s.name AS name
+        ORDER BY name
+        LIMIT 24
+        """
+        with self._driver.session() as session:
+            result = session.run(query, workspace_id=workspace_id, job_id=job_id)
+            return [str(record["name"]) for record in result if record.get("name")]
 
     def _execute(self, query: str, **parameters: Any) -> None:
         with self._driver.session() as session:

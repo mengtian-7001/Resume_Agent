@@ -24,12 +24,20 @@ logging.getLogger("agent_chain").setLevel(logging.INFO)
 
 
 def _queue_loop(stop_event: threading.Event) -> None:
+    logger = logging.getLogger("worker.queue")
     worker = ScreeningWorker()
     while not stop_event.is_set():
         try:
             result = worker.run_once()
             delay = 0.3 if result.get("processed") else 2.0
+            if result.get("processed"):
+                logger.info(
+                    "queue_tick processed task_id=%s type=%s",
+                    result.get("task_id"),
+                    result.get("task_type"),
+                )
         except Exception:
+            logger.exception("queue_tick failed")
             delay = 2.0
         stop_event.wait(delay)
 

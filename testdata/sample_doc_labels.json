@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "description": "Human-labeled decision expectations for samples/*.docx (manifest tags).",
+  "label_map": {
+    "推荐": "recommend",
+    "复核": "review",
+    "不匹配": "reject"
+  },
+  "pairs": [
+    {
+      "jd_id": "jd-ai-agent-llm",
+      "resume_id": "resume-cv_001",
+      "expected": "recommend",
+      "notes": "生产 Multi-Agent + 可量化结果"
+    },
+    {
+      "jd_id": "jd-ai-agent-llm",
+      "resume_id": "resume-cv_002",
+      "expected": "recommend",
+      "notes": "客服 Agent 落地"
+    },
+    {
+      "jd_id": "jd-ai-agent-llm",
+      "resume_id": "resume-cv_003",
+      "expected": "recommend",
+      "notes": "双 Agent 线上实践"
+    },
+    {
+      "jd_id": "jd-ai-agent-llm",
+      "resume_id": "resume-cv_004",
+      "expected": "review",
+      "notes": "问答为主，复杂编排偏弱"
+    },
+    {
+      "jd_id": "jd-ai-agent-llm",
+      "resume_id": "resume-cv_005",
+      "expected": "review",
+      "notes": "训练背景强，应用编排弱"
+    },
+    {
+      "jd_id": "jd-ai-agent-llm",
+      "resume_id": "resume-cv_007",
+      "expected": "reject",
+      "notes": "年限不足硬门槛"
+    },
+    {
+      "jd_id": "jd-etl",
+      "resume_id": "resume-cv_001",
+      "expected": "reject",
+      "notes": "Agent 简历对 ETL JD 跨域不匹配"
+    },
+    {
+      "jd_id": "jd-python-fastapi",
+      "resume_id": "resume-cv_003",
+      "expected": "review",
+      "notes": "有 Python/API 痕迹但非纯后端岗"
+    }
+  ]
+}

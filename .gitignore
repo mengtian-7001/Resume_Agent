@@ -8,3 +8,8 @@ supabase-config.js
 .vercel/
 .vercel
 .env*
+node_modules/
+test-results/
+playwright-report/
+*.jpg
+b0549e411365d268176a42378e817a49.jpg

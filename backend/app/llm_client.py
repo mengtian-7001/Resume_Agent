@@ -14,6 +14,9 @@ import httpx
 logger = logging.getLogger("agent_chain")
 
 
+from .llm_limits import LLMBudgetExceeded, get_llm_limiter
+
+
 @dataclass
 class ChatResult:
     content: str
@@ -79,6 +82,7 @@ class OpenAICompatibleClient:
         *,
         temperature: float = 0.4,
         max_tokens: int = 2500,
+        max_retries: int = 3,
     ) -> ChatResult:
         if not self.base_url or not self.api_key:
             raise LLMClientError("missing base_url or api_key")
@@ -94,22 +98,57 @@ class OpenAICompatibleClient:
             "Content-Type": "application/json",
         }
         started = time.perf_counter()
-        try:
-            with httpx.Client(timeout=self.timeout) as client:
-                response = client.post(url, headers=headers, json=payload)
-        except httpx.HTTPError as exc:
-            raise LLMClientError(f"HTTP error: {exc}") from exc
-        duration_ms = int((time.perf_counter() - started) * 1000)
-        if response.status_code >= 400:
-            raise LLMClientError(f"status={response.status_code} body={response.text[:400]}")
-        raw = response.json()
-        try:
-            content = raw["choices"][0]["message"]["content"]
-        except (KeyError, IndexError, TypeError) as exc:
-            raise LLMClientError(f"unexpected response shape: {raw!r}") from exc
-        model = str(raw.get("model") or self.model)
-        logger.info("llm_chat model=%s duration_ms=%s chars=%s", model, duration_ms, len(content or ""))
-        return ChatResult(content=content or "", model=model, duration_ms=duration_ms, raw=raw)
+        last_error = ""
+        limiter = get_llm_limiter()
+        for attempt in range(max(1, max_retries)):
+            try:
+                remaining = limiter.remaining_deadline_sec()
+                timeout = self.timeout
+                if remaining is not None:
+                    if remaining <= 0.5:
+                        raise LLMBudgetExceeded("job_deadline_exceeded")
+                    timeout = min(timeout, max(1.0, remaining))
+                with limiter.slot(acquire_timeout=min(60.0, timeout)):
+                    with httpx.Client(timeout=timeout) as client:
+                        response = client.post(url, headers=headers, json=payload)
+            except LLMBudgetExceeded as exc:
+                raise LLMClientError(str(exc)) from exc
+            except httpx.HTTPError as exc:
+                last_error = f"HTTP error: {exc}"
+                limiter.record_failure()
+                if attempt + 1 >= max_retries:
+                    raise LLMClientError(last_error) from exc
+                time.sleep(min(8.0, 0.6 * (2**attempt)))
+                continue
+
+            if response.status_code in {429, 500, 502, 503, 504}:
+                last_error = f"status={response.status_code} body={response.text[:400]}"
+                limiter.record_failure(is_rate_limit=response.status_code == 429)
+                if attempt + 1 >= max_retries:
+                    raise LLMClientError(last_error)
+                retry_after = response.headers.get("Retry-After")
+                delay = float(retry_after) if retry_after and retry_after.isdigit() else min(8.0, 0.8 * (2**attempt))
+                logger.warning("llm_chat retry attempt=%s delay=%.1fs %s", attempt + 1, delay, last_error[:120])
+                time.sleep(delay)
+                continue
+
+            if response.status_code >= 400:
+                limiter.record_failure()
+                raise LLMClientError(f"status={response.status_code} body={response.text[:400]}")
+
+            duration_ms = int((time.perf_counter() - started) * 1000)
+            raw = response.json()
+            try:
+                content = raw["choices"][0]["message"]["content"]
+            except (KeyError, IndexError, TypeError) as exc:
+                limiter.record_failure()
+                raise LLMClientError(f"unexpected response shape: {raw!r}") from exc
+            model = str(raw.get("model") or self.model)
+            limiter.record_success()
+            logger.info("llm_chat model=%s duration_ms=%s chars=%s", model, duration_ms, len(content or ""))
+            return ChatResult(content=content or "", model=model, duration_ms=duration_ms, raw=raw)
+
+        raise LLMClientError(last_error or "llm request failed")
 
 
 def client_from_llm_config(cfg: dict[str, Optional[str]], *, timeout: float = 90.0) -> OpenAICompatibleClient | None:

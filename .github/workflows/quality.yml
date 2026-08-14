@@ -1,0 +1,29 @@
+name: quality
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend-quality:
+    runs-on: ubuntu-latest
+    env:
+      AGENT_MODE: mock
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install browser test dependencies
+        run: npm ci
+      - name: Run unit and document evaluation gates
+        run: ./test.sh
+      - name: Install browser test runtime
+        run: npx playwright install --with-deps chromium
+      - name: Run browser smoke tests
+        run: npm run test:browser

@@ -1,3 +1,5 @@
+-- DEV ONLY bootstrap helper. Production must keep workspaces.allow_anonymous_bootstrap=false
+-- (see 20260814020000_gate_anonymous_bootstrap.sql). Do not treat this as a production default.
 -- Lets an authenticated anonymous session join only this pre-provisioned
 -- local workspace as a recruiter. The workspace ID is intentionally kept
 -- server-side, so callers cannot choose another workspace.
