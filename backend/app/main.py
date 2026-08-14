@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import threading
 import time
 from contextlib import asynccontextmanager
@@ -113,6 +114,9 @@ def _require_job_owner(job_id: str, authorization: Optional[str]) -> None:
 @app.get("/")
 def root() -> HTMLResponse:
     """Worker is API-only; send humans to the local frontend."""
+    if os.getenv("VERCEL"):
+        return RedirectResponse(url="/index.html", status_code=307)
+
     frontend = "http://127.0.0.1:4174/index.html"
     return HTMLResponse(
         f"""<!doctype html>
