@@ -21,6 +21,7 @@ let followLiveJobId = null;
 /** Latest completed screening payload used by「导出报告」. */
 let latestResultsSnapshot = null;
 
+wireColdStartOnboarding();
 wireExportReport();
 
 const DEFAULT_SCREENING_CONFIG = {
@@ -47,6 +48,83 @@ wireJdTextInput();
 initSamplePickers();
 
 prepareCandidateCards();
+
+function wireColdStartOnboarding() {
+  const dialog = document.getElementById("onboarding-dialog");
+  const panels = [...document.querySelectorAll("[data-onboarding-step]")];
+  const progress = [...document.querySelectorAll(".onboarding-progress i")];
+  const stepLabel = document.getElementById("onboarding-step-label");
+  const backButton = document.getElementById("onboarding-back");
+  const nextButton = document.getElementById("onboarding-next");
+  const skipButton = document.getElementById("onboarding-skip");
+  const reopenButton = document.getElementById("onboarding-reopen");
+  if (!dialog || !panels.length || !backButton || !nextButton || !skipButton) return;
+
+  const storageKey = "resume_agent_onboarding_v1";
+  let currentStep = 0;
+
+  const hasCompleted = () => {
+    try {
+      return window.localStorage.getItem(storageKey) === "completed";
+    } catch {
+      return false;
+    }
+  };
+
+  const markCompleted = () => {
+    try {
+      window.localStorage.setItem(storageKey, "completed");
+    } catch {
+      // The guide still works when browser storage is unavailable.
+    }
+  };
+
+  const renderStep = () => {
+    panels.forEach((panel, index) => panel.classList.toggle("active", index === currentStep));
+    progress.forEach((item, index) => item.classList.toggle("active", index === currentStep));
+    if (stepLabel) stepLabel.textContent = `第 ${currentStep + 1} 步，共 ${panels.length} 步`;
+    backButton.classList.toggle("visible", currentStep > 0);
+    nextButton.textContent = currentStep === panels.length - 1 ? "开始筛选 →" : "下一步 →";
+  };
+
+  const openGuide = () => {
+    currentStep = 0;
+    renderStep();
+    if (dialog.open) return;
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+    window.setTimeout(() => nextButton.focus(), 0);
+  };
+
+  const dismissGuide = ({ startScreening = false } = {}) => {
+    markCompleted();
+    if (dialog.open && typeof dialog.close === "function") dialog.close();
+    else dialog.removeAttribute("open");
+    if (startScreening) window.showView?.("upload");
+  };
+
+  nextButton.addEventListener("click", () => {
+    if (currentStep < panels.length - 1) {
+      currentStep += 1;
+      renderStep();
+      return;
+    }
+    dismissGuide({ startScreening: true });
+  });
+  backButton.addEventListener("click", () => {
+    if (currentStep === 0) return;
+    currentStep -= 1;
+    renderStep();
+  });
+  skipButton.addEventListener("click", () => dismissGuide());
+  reopenButton?.addEventListener("click", openGuide);
+  dialog.addEventListener("cancel", markCompleted);
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) dismissGuide();
+  });
+
+  if (!hasCompleted()) window.setTimeout(openGuide, 260);
+}
 
 function prepareCandidateCards() {
   document.querySelectorAll("#result-list .person-card").forEach((card) => {
