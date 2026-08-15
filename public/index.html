@@ -205,6 +205,15 @@
     .candidate-panel .section-title{margin:20px 0 10px}
     .candidate-panel .quote{margin:0 0 9px}
     .candidate-panel .feedback-panel{margin-bottom:0}
+    .vector-compare-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    .vector-metric{min-width:0;padding:16px;border-radius:13px;background:#f7f7f8}
+    .vector-metric span{display:block;color:#6e6e73;font-size:11px;font-weight:700}
+    .vector-metric strong{display:block;margin:8px 0 11px;font-size:28px;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-1px}
+    .vector-metric small{display:block;margin-top:7px;color:#8e8e93;font-size:10px;line-height:1.45}
+    .vector-meter{height:4px;overflow:hidden;border-radius:999px;background:#dedee2}.vector-meter i{display:block;width:0;height:100%;border-radius:inherit;background:#111;transition:width .35s ease}
+    .vector-source-line{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:12px;padding:12px 14px;border:1px solid #ececee;border-radius:12px;color:#555;font-size:11px;line-height:1.55}
+    .vector-source-line b{flex:0 0 auto;padding:5px 8px;border-radius:999px;background:#111;color:#fff;font-size:10px}
+    .vector-explain{margin:12px 0 0;color:#6e6e73;font-size:11px;line-height:1.65}
     .candidate-question-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
     .candidate-question-grid .question-item{margin:0;min-height:88px}
     .candidate-followups{white-space:pre-line}
@@ -449,6 +458,7 @@
       .candidate-section-grid{grid-template-columns:1fr;gap:14px;margin-top:20px}
       .candidate-panel,.candidate-panel-wide{grid-column:1;padding:17px;border-radius:14px}
       .candidate-question-grid{grid-template-columns:1fr}
+      .vector-compare-grid{grid-template-columns:1fr}.vector-metric{padding:14px}.vector-source-line{align-items:flex-start;flex-direction:column}
       .info-dialog{width:100%;max-width:none;max-height:88dvh;margin:auto 0 0;border-radius:20px 20px 0 0}.info-dialog-header{padding:19px 18px 15px}.info-dialog-body{padding:18px 18px calc(26px + env(safe-area-inset-bottom,0px))}.info-grid{grid-template-columns:1fr}.info-block-wide{grid-column:1}
       .file-openable{align-items:flex-start;flex-wrap:wrap}.file-name{min-width:0}.file-actions{width:100%;padding-left:38px;justify-content:space-between}.sample-preview-document pre{padding:16px;max-height:52dvh}
       .drawer{
@@ -772,6 +782,7 @@
           <div class="candidate-section-grid">
             <section class="candidate-panel"><h2>硬门槛校验</h2><p class="candidate-panel-intro">先确认岗位的强制条件是否满足。</p><div class="gates" id="candidate-gates"></div></section>
             <section class="candidate-panel"><h2>匹配度拆解</h2><p class="candidate-panel-intro">查看各项评分，快速定位强项与短板。</p><div class="breakdown" id="candidate-breakdown"></div></section>
+            <section class="candidate-panel candidate-panel-wide"><h2>向量语义对比</h2><p class="candidate-panel-intro">比较 JD 与候选人简历的整体语义，仅用于辅助文本相关度，不替代技能、年限和学历硬门槛。</p><div class="vector-compare-grid"><article class="vector-metric"><span>向量语义相似度</span><strong id="candidate-vector-semantic">—</strong><div class="vector-meter" aria-hidden="true"><i id="candidate-vector-semantic-bar"></i></div><small>Embedding + Cosine</small></article><article class="vector-metric"><span>关键词对照</span><strong id="candidate-vector-tfidf">—</strong><div class="vector-meter" aria-hidden="true"><i id="candidate-vector-tfidf-bar"></i></div><small>TF-IDF Cosine</small></article><article class="vector-metric"><span>混合文本分</span><strong id="candidate-vector-hybrid">—</strong><div class="vector-meter" aria-hidden="true"><i id="candidate-vector-hybrid-bar"></i></div><small>语义分 + 关键词分</small></article></div><div class="vector-source-line"><span id="candidate-vector-source">等待向量来源</span><b>256 维 · 余弦相似度</b></div><p class="vector-explain" id="candidate-vector-explain">文本分由语义相似度与 TF-IDF 加权生成；关键词重合很低时自动提高 TF-IDF 权重。</p></section>
             <section class="candidate-panel"><h2>关键证据</h2><p class="candidate-panel-intro">来自简历原文或分析过程中的可核验信息。</p><div id="candidate-quotes"></div></section>
             <section class="candidate-panel"><h2>风险与改进建议</h2><p class="candidate-panel-intro">需要面试官进一步确认的薄弱点。</p><div id="candidate-risks"></div></section>
             <section class="candidate-panel"><h2>AI 质检</h2><p class="candidate-panel-intro">复核评分依据、假设和可能影响结论的问题。</p><div id="candidate-checker"></div></section>
@@ -926,8 +937,17 @@
       summary:'负责企业级 AI Agent 与 LLM 应用的设计、开发、评测和生产落地，重点关注工具调用、复杂任务编排、稳定性与安全治理。',
       rawText:'岗位职责：设计并落地 AI Agent / LLM 应用；构建工具调用、多 Agent 协作与评测体系；完善日志、追踪、降级和人工接管机制。\n任职要求：3 年及以上相关经验，本科及以上学历；熟练使用 Python，并具备 LangChain、Function Calling、Multi-Agent 与 Prompt Engineering 的真实项目经验。'
     };
+    const demoVectorComparisons={
+      '林知远':{semantic:94,tfidf:86,hybrid:91,source:'demo_embedding'},
+      '韩沐辰':{semantic:91,tfidf:84,hybrid:88,source:'demo_embedding'},
+      '周启明':{semantic:87,tfidf:78,hybrid:84,source:'demo_embedding'},
+      '陈思齐':{semantic:72,tfidf:67,hybrid:70,source:'demo_embedding'},
+      '吴晓岚':{semantic:66,tfidf:62,hybrid:64,source:'demo_embedding'},
+      '孙博文':{semantic:47,tfidf:39,hybrid:44,source:'demo_embedding'}
+    };
     Object.entries(window.profiles).forEach(([candidateName, profile])=>{
       profile.jobDescription=profile.jobDescription||demoJobDescription;
+      profile.semanticComparison=profile.semanticComparison||demoVectorComparisons[candidateName];
       profile.questions=(profile.questions||[]).map((item,index)=>({
         ...item,
         id:item.id||`Q${String(index+1).padStart(2,'0')}`,
@@ -997,6 +1017,35 @@
       if(!Number.isFinite(n)) return 0;
       return Math.max(0, Math.min(100, Math.round(n)));
     }
+    function renderVectorComparison(comparison){
+      const data=comparison&&typeof comparison==='object'?comparison:{};
+      const metric=(name,value)=>{
+        const score=Number(value);
+        const display=document.getElementById(`candidate-vector-${name}`);
+        const bar=document.getElementById(`candidate-vector-${name}-bar`);
+        if(!display||!bar)return;
+        if(!Number.isFinite(score)){display.textContent='—';bar.style.width='0%';return}
+        const safe=Math.max(0,Math.min(100,score));
+        display.textContent=`${Math.round(safe)}%`;
+        bar.style.width=`${safe}%`;
+      };
+      metric('semantic',data.semantic);
+      metric('tfidf',data.tfidf);
+      metric('hybrid',data.hybrid);
+      const source=String(data.source||'unknown').toLowerCase();
+      const sourceLabels={
+        api:'Embedding API 已启用',
+        local_hash:'本地 Hashing 向量（自动降级）',
+        ngram_proxy:'字符 N-gram 语义代理（自动降级）',
+        demo_embedding:'演示向量结果'
+      };
+      document.getElementById('candidate-vector-source').textContent=`向量来源：${sourceLabels[source]||'当前结果未返回来源'}`;
+      const explain=document.getElementById('candidate-vector-explain');
+      if(source==='api')explain.textContent='由 Embedding API 生成并折叠为 256 维，通过余弦相似度比较；文本分再与 TF-IDF 动态加权。';
+      else if(source==='local_hash')explain.textContent='当前使用本地 256 维 Hashing 向量；Embedding API 恢复后会自动升级，同时保留 TF-IDF 对照。';
+      else if(source==='ngram_proxy')explain.textContent='当前使用字符 N-gram 代理语义分；该结果仅作辅助，硬门槛和证据校验不受影响。';
+      else explain.textContent='文本分由语义相似度与 TF-IDF 加权生成；关键词重合很低时自动提高 TF-IDF 权重。';
+    }
     window.openCandidateDetail=openCandidateDetail;
     function openCandidateDetail(name){
       const p=(window.profiles||{})[name];if(!p)return;
@@ -1040,6 +1089,7 @@
         const val=document.createElement('b');val.textContent=String(width);
         row.append(nameEl,bar,val);breakdownNode.append(row);
       });
+      renderVectorComparison(p.semanticComparison);
 
       const quotesNode=document.getElementById('candidate-quotes');
       clearNode(quotesNode);
