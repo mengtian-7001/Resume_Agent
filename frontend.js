@@ -18,6 +18,7 @@ let manualJdText = "";
 let liveSupabase = null;
 let activeJobId = null;
 let jobPollTimer = null;
+let jobPollGeneration = 0;
 /** Only follow this job on the upload page (in-flight session). Completed history stays in 任务记录. */
 let followLiveJobId = null;
 /** Latest completed screening payload used by「导出报告」. */
@@ -842,6 +843,7 @@ function resetUploadWorkspace() {
   const chainList = document.getElementById("agent-chain-list");
   const chainMode = document.getElementById("agent-chain-mode");
   if (chainList) {
+    delete chainList.dataset.renderKey;
     chainList.innerHTML = '<p class="agent-chain-empty">一键解析后，这里会实时显示 Construction / Checker 等步骤。</p>';
   }
   window.__agentChainSteps = [];
@@ -872,13 +874,20 @@ function showSubmittedPanel(job, documents) {
   const wasHidden = panel.hidden;
   panel.hidden = false;
   uploadView?.classList.add("upload-busy");
-  title.textContent = job.title || "本次筛选";
-  status.textContent = info.label;
+  const nextTitle = job.title || "本次筛选";
+  const nextDesc = getJobStatusDesc(job);
+  if (title.textContent !== nextTitle) title.textContent = nextTitle;
+  if (status.textContent !== info.label) status.textContent = info.label;
   status.dataset.state = job.status;
-  desc.textContent = getJobStatusDesc(job);
-  list.innerHTML = docs.length
+  if (desc.textContent !== nextDesc) desc.textContent = nextDesc;
+  const listMarkup = docs.length
     ? docs.map(submittedDocMarkup).join("")
     : '<p class="file-empty">本次任务没有可展示的上传文件，仍可查看下方智能体步骤与错误信息。</p>';
+  const listKey = JSON.stringify(docs.map((doc) => [doc.original_filename, doc.document_type, doc.size_bytes]));
+  if (list.dataset.renderKey !== listKey) {
+    list.innerHTML = listMarkup;
+    list.dataset.renderKey = listKey;
+  }
   if (viewResults) {
     viewResults.hidden = job.status !== "completed";
     viewResults.className = job.status === "completed" ? "primary" : "outline";
@@ -893,14 +902,25 @@ function startJobPolling(supabase, jobId) {
   if (!jobId) return;
   const meter = getParseMeterState();
   if (!meter.startedAt) meter.startedAt = Date.now();
-  jobPollTimer = window.setInterval(() => {
-    refreshJobState(supabase, jobId).catch(() => {});
-  }, 700);
+  const generation = jobPollGeneration;
+  const delay = window.matchMedia("(max-width: 720px)").matches ? 1400 : 900;
+  const poll = async () => {
+    if (generation !== jobPollGeneration) return;
+    try {
+      if (document.visibilityState === "visible") await refreshJobState(supabase, jobId);
+    } catch {
+      // Retry after the normal delay when a mobile network request is transiently unavailable.
+    } finally {
+      if (generation === jobPollGeneration) jobPollTimer = window.setTimeout(poll, delay);
+    }
+  };
+  jobPollTimer = window.setTimeout(poll, delay);
 }
 
 function stopJobPolling() {
+  jobPollGeneration += 1;
   if (jobPollTimer) {
-    window.clearInterval(jobPollTimer);
+    window.clearTimeout(jobPollTimer);
     jobPollTimer = null;
   }
 }
@@ -955,13 +975,20 @@ async function refreshAgentChain(supabase, jobId) {
     window.__agentChainSteps = steps;
     const mode = data?.mode || "—";
     const stage = data?.state?.stage || data?.status || "waiting";
-    if (modeNode) modeNode.textContent = `mode=${mode} · ${stage} · ${steps.length} steps`;
+    const modeText = `mode=${mode} · ${stage} · ${steps.length} steps`;
+    if (modeNode && modeNode.textContent !== modeText) modeNode.textContent = modeText;
+    const renderKey = JSON.stringify(steps);
     if (!steps.length) {
-      list.innerHTML = '<p class="agent-chain-empty">等待 Worker 写入步骤事件…</p>';
+      if (list.dataset.renderKey !== renderKey) {
+        list.innerHTML = '<p class="agent-chain-empty">等待 Worker 写入步骤事件…</p>';
+        list.dataset.renderKey = renderKey;
+      }
       return;
     }
+    if (list.dataset.renderKey === renderKey) return;
     const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 48;
     list.innerHTML = agentChainGroupedMarkup(steps);
+    list.dataset.renderKey = renderKey;
     if (nearBottom || steps.length <= 6) {
       list.scrollTop = list.scrollHeight;
     }
@@ -1281,14 +1308,16 @@ function updateJobProgress(job) {
   const meta = document.getElementById("live-pipeline-meta");
   const progress = meta?.querySelector("span");
   if (progress) {
-    progress.textContent = job.candidate_count
+    const nextProgress = job.candidate_count
       ? `已处理 ${job.processed_count || 0} / ${job.candidate_count} 份`
       : (jobStatusLabels[job.status]?.label || job.status);
+    if (progress.textContent !== nextProgress) progress.textContent = nextProgress;
   }
   if (meta) {
     const label = meta.childNodes[0];
     if (label && label.nodeType === Node.TEXT_NODE) {
-      label.textContent = `${job.title || "当前筛选"} `;
+      const nextLabel = `${job.title || "当前筛选"} `;
+      if (label.textContent !== nextLabel) label.textContent = nextLabel;
     } else {
       meta.innerHTML = `${escapeHtml(job.title || "当前筛选")}<span>${escapeHtml(
         job.candidate_count
@@ -1765,13 +1794,18 @@ function setStatValue(key, value, deltaText = "", deltaKind = "") {
 function setPipelineNodes(states) {
   document.querySelectorAll("#live-pipeline .pipe-node").forEach((node) => {
     const state = states[node.dataset.pipe] || "queued";
+    if (node.dataset.state === state) return;
+    node.dataset.state = state;
     node.classList.toggle("done", state === "completed");
     node.classList.toggle("now", state === "processing");
     const icon = node.querySelector(".pipe-icon");
     if (!icon) return;
-    if (state === "completed") icon.textContent = "✓";
-    else if (state === "processing") icon.textContent = "…";
-    else icon.textContent = { parse: "1", extract: "2", match: "3", questions: "4" }[node.dataset.pipe] || "·";
+    const nextText = state === "completed"
+      ? "✓"
+      : state === "processing"
+        ? "…"
+        : ({ parse: "1", extract: "2", match: "3", questions: "4" }[node.dataset.pipe] || "·");
+    if (icon.textContent !== nextText) icon.textContent = nextText;
   });
 }
 
