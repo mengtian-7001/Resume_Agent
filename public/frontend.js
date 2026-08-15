@@ -3,7 +3,9 @@ import { agentChainGroupedMarkup } from "./frontend-agent-chain.js";
 import { renderRecruiterFeedback } from "./frontend-feedback.js";
 import { createTextDocxFile } from "./frontend-document.js";
 
-const config = window.SUPABASE_CONFIG || {};
+const config = new URLSearchParams(window.location.search).get("demo") === "1"
+  ? {}
+  : (window.SUPABASE_CONFIG || {});
 const statusNode = document.querySelector(".upload-side p");
 const startButton = document.getElementById("start-screening");
 const jdInput = document.getElementById("jd-input");

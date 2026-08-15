@@ -50,6 +50,24 @@ test("demo runs one-click flow and opens a standalone candidate analysis page", 
   expect(errors).toEqual([]);
 });
 
+test("demo query explicitly keeps the page offline even when a live config exists", async ({ page }) => {
+  await page.unroute("**/supabase-config.js*");
+  await page.route("**/supabase-config.js*", (route) =>
+    route.fulfill({
+      contentType: "application/javascript",
+      body: `window.SUPABASE_CONFIG = {
+        url: "https://example.supabase.co",
+        anonKey: "test-publishable-key",
+        workspaceId: "test-workspace",
+        allowAnonymousBootstrap: true
+      };`,
+    }),
+  );
+  await page.goto("/index.html?demo=1");
+  await expect(page.locator("#runtime-mode")).toContainText("静态产品示例");
+  await expect(page.locator("#start-screening")).toHaveText("运行真实样例 →");
+});
+
 test("390px viewport has no document horizontal overflow", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/index.html");
