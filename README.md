@@ -11,8 +11,8 @@
 最短演示闭环为：`1 份 JD + 多份简历 → 结构化解析 → 混合评分 → 原文证据与风险 → AI 质检 → 至少 10 道面试题 + 3–5 个追问 → 招聘人员复核`。
 
 - 线上体验地址：[resume.flowsome.top](https://resume.flowsome.top)。首次访问会自动建立匿名会话和独立工作区，无需注册或登录。
-- 未配置 Supabase 时，页面可直接进入演示模式：点「查看示例结果」展示预制闭环；「运行真实样例」需要 `./dev.sh`。
-- 配置本地环境后，`./dev.sh` 启动真实上传与 Worker；选择样例后点击「一键解析」走同一流程。
+- 新克隆直接运行 `./dev.sh` 即进入零配置演示模式：点「查看示例结果」展示预制闭环。
+- 配置本地 Supabase 后，`./dev.sh --live` 启动真实上传与 Worker；选择样例后点击「一键解析」走同一流程。
 - 两分钟演示步骤见 [docs/DEMO.md](docs/DEMO.md)，部署说明见 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)，评测案例见 [docs/EVALUATION_CASES.md](docs/EVALUATION_CASES.md)。
 
 ### 系统能力
@@ -900,7 +900,31 @@ python3 -m http.server 4173
 
 ## 本地一键启动（推荐）
 
-首次只需准备两件事：
+### 新克隆：零配置运行
+
+只需要 Python 3，不需要 Supabase、模型 Key、Node.js 或依赖安装：
+
+```bash
+git clone https://github.com/mengtian-7001/Resume_Agent.git
+cd Resume_Agent
+./dev.sh
+```
+
+脚本未检测到真实配置时会自动进入静态演示模式并打开浏览器。在页面点击「查看示例结果」，即可体验候选人排序、独立详情、JD 介绍、面试说明、10 道面试题、追问和 Checker 结果。
+
+也可以显式运行：
+
+```bash
+./dev.sh --demo
+# 或
+npm start
+```
+
+端口被占用时可指定其他端口：`PORT=4180 ./dev.sh --demo`。服务器默认只绑定 `127.0.0.1`，按 `Ctrl+C` 停止。
+
+### 启用真实解析
+
+真实上传、Supabase 落库和 Worker 解析需要准备两件事：
 
 1. `supabase-config.js`（从 `supabase-config.example.js` 复制，填好 url / anonKey / workspaceId）
 2. 第一次运行 `./dev.sh` 时粘贴 Supabase 的 **service_role key**（只写入 `backend/.env`，不会进前端）
@@ -914,10 +938,10 @@ python3 -m http.server 4173
 Vercel 公共体验部署会自动启用这条匿名体验链路。承载正式成员和真实业务数据的独立生产环境应设置 `allowAnonymousBootstrap: false`，并使用邮箱登录的正式成员工作区。
 `claim_processing_task` 与 `purge_expired_screenings` 仅授予 `service_role`；viewer 角色只读。
 
-之后每次开发：
+配置完成后运行：
 
 ```bash
-./dev.sh
+./dev.sh --live
 ```
 
 脚本会自动：
@@ -927,7 +951,7 @@ Vercel 公共体验部署会自动启用这条匿名体验链路。承载正式�
 - 同时启动：静态页面、FastAPI Worker、任务队列循环
 - 打开浏览器（默认 http://127.0.0.1:4174）
 
-按 `Ctrl+C` 停止全部服务。
+以后直接运行 `./dev.sh`，脚本检测到有效配置后也会自动进入真实解析模式。按 `Ctrl+C` 停止全部服务。
 
 ## 一键跑测试
 

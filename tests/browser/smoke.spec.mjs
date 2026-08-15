@@ -1,11 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("resume_agent_onboarding_v1", "completed");
+  });
   // Keep smoke tests offline and deterministic: exercise the built-in demo path.
-  await page.route("**/supabase-config.js", (route) =>
+  await page.route("**/supabase-config.js*", (route) =>
     route.fulfill({ contentType: "application/javascript", body: "window.SUPABASE_CONFIG = {};" }),
   );
-  await page.route("**/supabase-config.worker.js", (route) =>
+  await page.route("**/supabase-config.worker.js*", (route) =>
     route.fulfill({ contentType: "application/javascript", body: "" }),
   );
 });
@@ -117,8 +120,8 @@ test("JD can be entered as text, selected, reopened, and edited", async ({ page 
 test("live upload keeps selected files and clearly asks unauthenticated users to sign in", async ({ page }) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.unroute("**/supabase-config.js");
-  await page.route("**/supabase-config.js", (route) =>
+  await page.unroute("**/supabase-config.js*");
+  await page.route("**/supabase-config.js*", (route) =>
     route.fulfill({
       contentType: "application/javascript",
       body: `window.SUPABASE_CONFIG = {
@@ -175,8 +178,8 @@ test("live upload keeps selected files and clearly asks unauthenticated users to
 
 test("public deployment automatically opens an isolated anonymous workspace", async ({ page }) => {
   const workspaceId = "8d4874a6-33d0-4ae8-bdb8-48f27daf6715";
-  await page.unroute("**/supabase-config.js");
-  await page.route("**/supabase-config.js", (route) =>
+  await page.unroute("**/supabase-config.js*");
+  await page.route("**/supabase-config.js*", (route) =>
     route.fulfill({
       contentType: "application/javascript",
       body: `window.SUPABASE_CONFIG = {
