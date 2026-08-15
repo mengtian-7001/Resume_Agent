@@ -1,13 +1,18 @@
 import { checkerPresentation } from "./frontend-checker.js";
 import { agentChainGroupedMarkup } from "./frontend-agent-chain.js";
 import { renderRecruiterFeedback } from "./frontend-feedback.js";
+import { createTextDocxFile } from "./frontend-document.js";
 
 const config = window.SUPABASE_CONFIG;
 const statusNode = document.querySelector(".upload-side p");
 const startButton = document.getElementById("start-screening");
 const jdInput = document.getElementById("jd-input");
 const resumeInput = document.getElementById("resume-input");
+const jdTextPanel = document.getElementById("jd-text-panel");
+const jdTextTitle = document.getElementById("jd-text-title");
+const jdTextarea = document.getElementById("jd-textarea");
 const selected = { jd: null, resumes: [] };
+let manualJdText = "";
 let liveSupabase = null;
 let activeJobId = null;
 let jobPollTimer = null;
@@ -38,6 +43,7 @@ const selectedSampleIds = { jd: null, resumes: new Set() };
 
 wireScreeningConfigButtons();
 wireSelectedDocumentPreviews();
+wireJdTextInput();
 initSamplePickers();
 
 prepareCandidateCards();
@@ -111,6 +117,94 @@ function setRuntimeMode(mode, label) {
   if (!node) return;
   node.dataset.mode = mode;
   node.textContent = label;
+}
+
+function wireJdTextInput() {
+  const toggle = document.getElementById("jd-text-toggle");
+  const apply = document.getElementById("jd-text-apply");
+  const cancel = document.getElementById("jd-text-cancel");
+  const count = document.getElementById("jd-text-count");
+  const status = document.getElementById("jd-text-status");
+  if (!toggle || !apply || !cancel || !jdTextPanel || !jdTextarea || !jdTextTitle) return;
+
+  const refreshCounter = () => {
+    if (count) count.textContent = `${jdTextarea.value.length.toLocaleString("zh-CN")} / 20,000`;
+    if (status && manualJdText) {
+      status.textContent = "内容有修改时，请重新确认";
+      status.style.color = "var(--muted)";
+    }
+  };
+
+  toggle.addEventListener("click", () => {
+    setJdTextPanelOpen(jdTextPanel.hidden);
+  });
+  cancel.addEventListener("click", () => setJdTextPanelOpen(false));
+  jdTextarea.addEventListener("input", refreshCounter);
+
+  apply.addEventListener("click", () => {
+    const body = jdTextarea.value.replace(/\r\n?/g, "\n").trim();
+    if (body.length < 20) {
+      if (status) {
+        status.textContent = "请至少输入 20 个字的岗位描述";
+        status.style.color = "#c62828";
+      }
+      jdTextarea.focus();
+      return;
+    }
+    const title = jdTextTitle.value.trim();
+    const fullText = title ? `岗位名称：${title}\n\n${body}` : body;
+    const displayTitle = sanitizeManualJdTitle(title || "文字输入 JD");
+    const file = createTextDocxFile(fullText, `${displayTitle}.docx`);
+    validateFile(file);
+    manualJdText = fullText;
+    selected.jd = file;
+    selectedSampleIds.jd = null;
+    if (jdInput) jdInput.value = "";
+    renderFiles();
+    renderSampleChips("jd");
+    if (status) {
+      status.textContent = `已采用 ${fullText.length.toLocaleString("zh-CN")} 个字`;
+      status.style.color = "#1b5e20";
+    }
+    setJdTextPanelOpen(false);
+  });
+}
+
+function setJdTextPanelOpen(open) {
+  const toggle = document.getElementById("jd-text-toggle");
+  if (!jdTextPanel || !toggle) return;
+  jdTextPanel.hidden = !open;
+  toggle.setAttribute("aria-expanded", String(open));
+  toggle.textContent = manualJdText ? (open ? "收起编辑" : "编辑文字") : (open ? "收起输入" : "直接输入");
+  if (open) window.setTimeout(() => (jdTextTitle?.value ? jdTextarea?.focus() : jdTextTitle?.focus()), 0);
+}
+
+function clearManualJdInput({ clearDraft = true } = {}) {
+  manualJdText = "";
+  if (clearDraft) {
+    if (jdTextTitle) jdTextTitle.value = "";
+    if (jdTextarea) jdTextarea.value = "";
+    const count = document.getElementById("jd-text-count");
+    const status = document.getElementById("jd-text-status");
+    if (count) count.textContent = "0 / 20,000";
+    if (status) {
+      status.textContent = "至少输入 20 个字";
+      status.style.color = "var(--muted)";
+    }
+  }
+  setJdTextPanelOpen(false);
+}
+
+function sanitizeManualJdTitle(value) {
+  return String(value || "文字输入 JD")
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 60) || "文字输入 JD";
+}
+
+function isManualJdFile(file) {
+  return Boolean(file && selected.jd === file && manualJdText);
 }
 
 async function initializeSession(supabase) {
@@ -208,6 +302,7 @@ function wireUpload(supabase) {
   jdInput.addEventListener("change", () => {
     const [file] = jdInput.files;
     if (!file) return;
+    clearManualJdInput();
     selected.jd = file;
     selectedSampleIds.jd = null;
     renderFiles();
@@ -352,6 +447,7 @@ async function startScreening(supabase, authenticatedUser = null) {
   })));
   startJobPolling(supabase, activeJobId);
   selected.jd = null;
+  clearManualJdInput();
   selected.resumes = [];
   selectedSampleIds.jd = null;
   selectedSampleIds.resumes.clear();
@@ -382,7 +478,7 @@ function documentMime(file) {
 function resetUploadLists() {
   const jdBox = document.getElementById("jd-file");
   const resumeBox = document.getElementById("resume-files");
-  if (jdBox) jdBox.innerHTML = '<p class="file-empty">尚未选择 JD 文件</p>';
+  if (jdBox) jdBox.innerHTML = '<p class="file-empty">尚未选择或输入 JD</p>';
   if (resumeBox) resumeBox.innerHTML = '<p class="file-empty">尚未选择简历</p>';
 }
 
@@ -390,7 +486,7 @@ function renderFiles() {
   const jdBox = document.getElementById("jd-file");
   const resumeBox = document.getElementById("resume-files");
   if (selected.jd) jdBox.innerHTML = fileMarkup(selected.jd, "jd", 0);
-  else jdBox.innerHTML = '<p class="file-empty">尚未选择 JD 文件</p>';
+  else jdBox.innerHTML = '<p class="file-empty">尚未选择或输入 JD</p>';
   if (selected.resumes.length) resumeBox.innerHTML = selected.resumes.map((file, index) => fileMarkup(file, "resume", index)).join("");
   else resumeBox.innerHTML = '<p class="file-empty">尚未选择简历</p>';
 }
@@ -400,9 +496,12 @@ function fileMarkup(file, type, index) {
   const ext = lower.endsWith(".docx") ? "DOCX" : lower.endsWith(".doc") ? "DOC" : "PDF";
   const sample = selectedSampleForFile(type, file);
   const sampleId = sample?.id || "";
+  const detail = type === "jd" && isManualJdFile(file)
+    ? `${manualJdText.length.toLocaleString("zh-CN")} 字 · 直接输入`
+    : `${Math.ceil(file.size / 1024)} KB · 已选择`;
   return `<div class="file file-pending file-openable" role="button" tabindex="0" data-preview-type="${type}" data-file-index="${index}" data-sample-id="${escapeHtml(sampleId)}" aria-label="查看 ${escapeHtml(file.name)}">
     <div class="filetype">${ext}</div>
-    <div class="file-name">${escapeHtml(file.name)}<span>${Math.ceil(file.size / 1024)} KB · 已选择</span></div>
+    <div class="file-name">${escapeHtml(file.name)}<span>${escapeHtml(detail)}</span></div>
     <div class="file-actions"><span class="file-open">查看内容 →</span><button type="button" class="file-remove" aria-label="移除 ${escapeHtml(file.name)}">移除</button></div>
   </div>`;
 }
@@ -444,6 +543,7 @@ function wireSelectedDocumentPreviews() {
 function removeSelectedDocument(type, index) {
   if (type === "jd") {
     selected.jd = null;
+    clearManualJdInput();
     selectedSampleIds.jd = null;
     if (jdInput) jdInput.value = "";
   } else {
@@ -466,12 +566,14 @@ function openSelectedDocument(type, index, sampleId = "") {
   const meta = [
     type === "jd" ? "岗位说明" : "候选人资料",
     sample ? sampleChipMeta(type, sample) : `${Math.ceil(file.size / 1024)} KB`,
-    sample ? "内置样例" : "本地文件",
+    sample ? "内置样例" : (type === "jd" && isManualJdFile(file) ? "直接输入" : "本地文件"),
   ];
+  const previewText = sample?.preview
+    || (type === "jd" && isManualJdFile(file) ? manualJdText : "文件已选择。完成一键解析后，可在独立候选人页面查看结构化内容与完整分析。");
   document.getElementById("sample-preview-body").innerHTML = `
     <div class="sample-preview-meta">${meta.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>
     <div class="sample-preview-document">
-      <pre>${escapeHtml(sample?.preview || "文件已选择。完成一键解析后，可在独立候选人页面查看结构化内容与完整分析。")}</pre>
+      <pre>${escapeHtml(previewText)}</pre>
     </div>`;
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");
@@ -597,6 +699,7 @@ function resetUploadWorkspace() {
   uploadView?.classList.remove("upload-busy");
   followLiveJobId = null;
   selected.jd = null;
+  clearManualJdInput();
   selected.resumes = [];
   selectedSampleIds.jd = null;
   selectedSampleIds.resumes.clear();
@@ -2388,6 +2491,7 @@ async function selectSample(type, sampleId) {
     );
     validateFile(file);
     if (type === "jd") {
+      clearManualJdInput();
       selected.jd = file;
       selectedSampleIds.jd = sampleId;
     } else {

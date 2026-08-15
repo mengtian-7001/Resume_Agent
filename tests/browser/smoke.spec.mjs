@@ -84,6 +84,36 @@ test("selected sample JD and resume can be opened without losing the selection",
   await expect(page.locator("#resume-files .file-empty")).toBeVisible();
 });
 
+test("JD can be entered as text, selected, reopened, and edited", async ({ page }) => {
+  await page.goto("/index.html");
+  await page.locator('[data-view="upload"]').click();
+
+  await page.getByRole("button", { name: "直接输入" }).click();
+  await expect(page.locator("#jd-text-panel")).toBeVisible();
+  await page.locator("#jd-text-title").fill("AI Agent 工程师");
+  await page.locator("#jd-textarea").fill(
+    "岗位职责：负责企业级 Agent 的设计、开发、评测与上线。\n"
+      + "任职要求：3 年以上经验，本科及以上学历，熟悉 Python、LangChain、Function Calling 和 Multi-Agent。",
+  );
+  await expect(page.locator("#jd-text-count")).not.toHaveText("0 / 20,000");
+  await page.getByRole("button", { name: "使用这段文字" }).click();
+
+  const selectedJd = page.locator("#jd-file .file-openable");
+  await expect(selectedJd).toContainText("AI Agent 工程师.docx");
+  await expect(selectedJd).toContainText("DOCX");
+  await expect(selectedJd).toContainText("直接输入");
+  await selectedJd.click();
+  await expect(page.locator("#sample-preview-kicker")).toHaveText("JD 文档");
+  await expect(page.locator("#sample-preview-body")).toContainText("岗位职责");
+  await expect(page.locator("#sample-preview-body")).toContainText("Function Calling");
+  await page.getByRole("button", { name: "关闭文件预览" }).click();
+
+  await page.getByRole("button", { name: "编辑文字" }).click();
+  await expect(page.locator("#jd-textarea")).toHaveValue(/企业级 Agent/);
+  await page.getByRole("button", { name: "取消" }).click();
+  await expect(page.locator("#jd-text-panel")).toBeHidden();
+});
+
 test("live upload keeps selected files and clearly asks unauthenticated users to sign in", async ({ page }) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));

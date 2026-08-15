@@ -47,6 +47,7 @@ if (env.VERCEL) {
     "frontend-agent-chain.js",
     "frontend-checker.js",
     "frontend-feedback.js",
+    "frontend-document.js",
     "interview-workspace.js",
     "README.md",
   ];

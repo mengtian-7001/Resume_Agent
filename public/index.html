@@ -26,10 +26,32 @@
   </style>
   <style>
     #upload.upload-busy .drop,
+    #upload.upload-busy .jd-text-panel,
     #upload.upload-busy .sample-picker,
     #upload.upload-busy .file-list,
     #upload.upload-busy .submit-row{display:none}
     #upload.upload-busy .upload-side{opacity:.55}
+    .jd-entry-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+    .jd-text-panel{padding:18px;border:1px solid var(--line);border-radius:13px;background:#fafafa}
+    .jd-text-panel[hidden]{display:none!important}
+    .jd-text-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:12px}
+    .jd-text-head label{display:block;font-size:14px;font-weight:750;margin-bottom:4px}
+    .jd-text-head p{margin:0;color:var(--muted);font-size:11px;line-height:1.55}
+    .jd-text-count{flex:0 0 auto;color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+    .jd-text-title,.jd-textarea{display:block;width:100%;border:1px solid #d2d2d7;background:#fff;color:#111;font:inherit;outline:none}
+    .jd-text-title{height:42px;border-radius:9px;padding:0 12px;margin-bottom:9px}
+    .jd-textarea{min-height:190px;resize:vertical;border-radius:11px;padding:12px;line-height:1.7}
+    .jd-text-title:focus,.jd-textarea:focus{border-color:#111;box-shadow:0 0 0 3px rgba(0,0,0,.06)}
+    .jd-text-actions{display:flex;justify-content:flex-end;gap:8px;align-items:center;margin-top:11px}
+    .jd-text-status{margin-right:auto;color:var(--muted);font-size:11px}
+    @media(max-width:620px){
+      .jd-entry-actions{justify-content:flex-start}
+      .jd-text-panel{padding:14px}
+      .jd-text-head{display:block}.jd-text-count{display:block;margin-top:6px}
+      .jd-textarea{min-height:220px;font-size:16px}.jd-text-title{font-size:16px}
+      .jd-text-actions{align-items:stretch;flex-direction:column-reverse}.jd-text-actions .outline,.jd-text-actions .primary{width:100%;min-height:44px}
+      .jd-text-status{margin:0;text-align:center}
+    }
     .submitted-panel{
       margin-top:8px;padding:0;background:transparent;border:0;border-radius:0;
     }
@@ -554,9 +576,15 @@
         <section class="view" id="upload">
             <div class="intro"><div><h1>发起一次智能筛选</h1><p>选好 JD 和简历，点「一键解析」。历史任务在侧边「最近任务」或底部/左侧「任务」里查看，不会一进来就占满本页。</p></div></div>
           <div class="upload-layout"><div class="upload-main">
-            <div class="drop"><div class="drop-icon">▤</div><div><h2>上传岗位描述（JD）</h2><p>请上传 1 份岗位说明书，我们将提取职责、必备技能、年限与学历等筛选标准。</p></div><div class="drop-actions"><button class="outline" onclick="demoAdd('jd')">选择文件</button><div class="hint">PDF、DOC、DOCX · 最大 10MB</div></div></div>
+            <div class="drop"><div class="drop-icon">▤</div><div><h2>添加岗位描述（JD）</h2><p>上传文件或直接粘贴文字，我们将提取职责、必备技能、年限与学历等筛选标准。</p></div><div class="drop-actions"><div class="jd-entry-actions"><button class="outline" type="button" onclick="demoAdd('jd')">选择文件</button><button class="outline" type="button" id="jd-text-toggle" aria-expanded="false" aria-controls="jd-text-panel">直接输入</button></div><div class="hint">PDF、DOC、DOCX，或直接输入文字</div></div></div>
+            <section class="jd-text-panel" id="jd-text-panel" hidden aria-labelledby="jd-text-label">
+              <div class="jd-text-head"><div><label id="jd-text-label" for="jd-textarea">直接粘贴 JD 内容</label><p>建议包含岗位名称、岗位职责、任职要求、工作年限和学历要求。</p></div><span class="jd-text-count" id="jd-text-count">0 / 20,000</span></div>
+              <input class="jd-text-title" id="jd-text-title" type="text" maxlength="80" placeholder="岗位名称（可选，例如：AI Agent 工程师）" autocomplete="off" />
+              <textarea class="jd-textarea" id="jd-textarea" maxlength="20000" placeholder="在这里粘贴完整的岗位描述……"></textarea>
+              <div class="jd-text-actions"><span class="jd-text-status" id="jd-text-status">至少输入 20 个字</span><button class="outline" type="button" id="jd-text-cancel">取消</button><button class="primary" type="button" id="jd-text-apply">使用这段文字</button></div>
+            </section>
             <div class="sample-picker" data-type="jd"><div class="sample-picker-head"><span>或从样例中选择</span><button type="button" class="text-link sample-shuffle" data-type="jd">换一批</button></div><div class="sample-chips" id="jd-sample-chips"></div></div>
-            <div class="file-list" id="jd-file"><p class="file-empty">尚未选择 JD 文件</p></div>
+            <div class="file-list" id="jd-file"><p class="file-empty">尚未选择或输入 JD</p></div>
             <div class="drop"><div class="drop-icon">▥</div><div><h2>上传候选人简历</h2><p>可一次选择多份简历。每份文件会单独解析并基于同一个 JD 打分。</p></div><div class="drop-actions"><button class="outline" onclick="demoAdd('resume')">添加简历</button><div class="hint">PDF、DOC、DOCX · 最多 20 份</div></div></div>
             <div class="sample-picker" data-type="resume"><div class="sample-picker-head"><span>或从样例中选择</span><button type="button" class="text-link sample-shuffle" data-type="resume">换一批</button></div><div class="sample-chips" id="resume-sample-chips"></div></div>
             <div class="file-list" id="resume-files"><p class="file-empty">尚未选择简历</p></div>
@@ -617,9 +645,9 @@
             <h3>提交前请确认</h3>
             <p>选好 JD 与简历后点「一键解析」。历史筛选不会自动占满本页，请在下方或左侧「任务」查看。</p>
             <ul class="rules">
-              <li>JD 数量恰好为 1 份</li>
+              <li>JD 可上传文件或直接输入文字</li>
               <li>至少选择 1 份简历</li>
-              <li>支持 PDF / DOCX 格式</li>
+              <li>文件支持 PDF / DOC / DOCX</li>
               <li>单个文件不超过 10MB</li>
               <li>文件须包含可解析文本</li>
             </ul>

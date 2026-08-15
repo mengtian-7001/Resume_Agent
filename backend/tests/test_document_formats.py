@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
 import tempfile
@@ -19,6 +20,38 @@ from app.document_text import (
 
 
 class DocumentFormatTests(unittest.TestCase):
+    def test_browser_text_builder_produces_parseable_docx(self) -> None:
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("Node.js is not installed")
+
+        root = Path(__file__).resolve().parents[2]
+        module_url = (root / "frontend-document.js").as_uri()
+        with tempfile.TemporaryDirectory(prefix="resume-agent-text-jd-") as temp_dir:
+            output = Path(temp_dir) / "manual-jd.docx"
+            source = (
+                "岗位名称：AI Agent 工程师\n"
+                "岗位职责：负责企业级智能体的设计、开发与上线。\n"
+                "任职要求：熟悉 Python、LangChain 和 Function Calling。"
+            )
+            script = (
+                "import { writeFileSync } from 'node:fs';"
+                f"import {{ createTextDocxBytes }} from {json.dumps(module_url)};"
+                f"writeFileSync({json.dumps(str(output))}, createTextDocxBytes({json.dumps(source)}));"
+            )
+            completed = subprocess.run(
+                [node, "--input-type=module", "-e", script],
+                cwd=root,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=15,
+                check=False,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr.decode(errors="replace"))
+            text = extract_document_text(output.read_bytes(), DOCX_MIME)
+            self.assertIn("AI Agent 工程师", text)
+            self.assertIn("Function Calling", text)
+
     def test_scanned_pdf_uses_offline_ocr(self) -> None:
         source = fitz.open()
         source_page = source.new_page(width=800, height=300)
