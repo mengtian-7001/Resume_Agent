@@ -41,6 +41,8 @@ const RESUME_SAMPLE_COUNT = 4;
 
 let sampleManifest = null;
 const selectedSampleIds = { jd: null, resumes: new Set() };
+const pendingSampleIds = new Set();
+const sampleBlobCache = new Map();
 
 wireScreeningConfigButtons();
 wireSelectedDocumentPreviews();
@@ -564,9 +566,30 @@ function renderFiles() {
   const jdBox = document.getElementById("jd-file");
   const resumeBox = document.getElementById("resume-files");
   if (selected.jd) jdBox.innerHTML = fileMarkup(selected.jd, "jd", 0);
-  else jdBox.innerHTML = '<p class="file-empty">尚未选择或输入 JD</p>';
-  if (selected.resumes.length) resumeBox.innerHTML = selected.resumes.map((file, index) => fileMarkup(file, "resume", index)).join("");
-  else resumeBox.innerHTML = '<p class="file-empty">尚未选择简历</p>';
+  else {
+    const pendingJd = pendingSamples("jd")[0];
+    jdBox.innerHTML = pendingJd ? pendingSampleMarkup(pendingJd, "jd") : '<p class="file-empty">尚未选择或输入 JD</p>';
+  }
+  const resumeMarkup = selected.resumes.map((file, index) => fileMarkup(file, "resume", index)).join("");
+  const pendingResumeMarkup = pendingSamples("resume").map((sample) => pendingSampleMarkup(sample, "resume")).join("");
+  resumeBox.innerHTML = resumeMarkup || pendingResumeMarkup
+    ? `${resumeMarkup}${pendingResumeMarkup}`
+    : '<p class="file-empty">尚未选择简历</p>';
+}
+
+function pendingSamples(type) {
+  if (!sampleManifest) return [];
+  const pool = type === "jd" ? sampleManifest.jd : sampleManifest.resumes;
+  return (pool || []).filter((sample) => pendingSampleIds.has(`${type}:${sample.id}`));
+}
+
+function pendingSampleMarkup(sample, type) {
+  const ext = String(sample.filename || "").split(".").pop()?.toUpperCase() || "DOCX";
+  const label = type === "jd" ? "正在读取岗位样例…" : "正在读取简历样例…";
+  return `<div class="file file-pending file-loading" role="status">
+    <div class="filetype">${escapeHtml(ext)}</div>
+    <div class="file-name">${escapeHtml(sample.filename || sample.title)}<span>${label}</span></div>
+  </div>`;
 }
 
 function fileMarkup(file, type, index) {
@@ -2506,6 +2529,10 @@ function isSampleSelected(type, sampleId) {
   return type === "jd" ? selectedSampleIds.jd === sampleId : selectedSampleIds.resumes.has(sampleId);
 }
 
+function isSamplePending(type, sampleId) {
+  return pendingSampleIds.has(`${type}:${sampleId}`);
+}
+
 function sampleChipMeta(type, sample) {
   const salary = normalizeSalaryBand(sample.salary);
   if (type === "jd") {
@@ -2532,20 +2559,31 @@ function renderSampleChips(type, reshuffle = false) {
   const container = document.getElementById(type === "jd" ? "jd-sample-chips" : "resume-sample-chips");
   if (!container || !pool?.length) return;
   const count = type === "jd" ? pool.length : Math.min(RESUME_SAMPLE_COUNT, pool.length);
-  const visible = reshuffle || !container.dataset.rendered
+  const firstRender = !container.dataset.rendered;
+  const visible = reshuffle || firstRender
     ? shuffleSamples(pool).slice(0, count)
     : JSON.parse(container.dataset.visible || "[]");
   container.dataset.rendered = "1";
   container.dataset.visible = JSON.stringify(visible);
-  container.innerHTML = visible.map((sample) => `
-    <button type="button" class="sample-chip${isSampleSelected(type, sample.id) ? " active" : ""}" data-type="${type}" data-sample-id="${escapeHtml(sample.id)}">
+  container.innerHTML = visible.map((sample) => {
+    const pending = isSamplePending(type, sample.id);
+    return `
+    <button type="button" class="sample-chip${isSampleSelected(type, sample.id) ? " active" : ""}${pending ? " loading" : ""}" data-type="${type}" data-sample-id="${escapeHtml(sample.id)}" aria-busy="${pending}">
       <span class="sample-chip-title">${escapeHtml(sample.title)}</span>
-      <small class="sample-chip-meta">${escapeHtml(sampleChipMeta(type, sample))}</small>
+      <small class="sample-chip-meta">${pending ? "正在读取…" : escapeHtml(sampleChipMeta(type, sample))}</small>
     </button>
-  `).join("");
+  `;
+  }).join("");
   container.querySelectorAll(".sample-chip").forEach((chip) => {
     chip.addEventListener("click", () => selectSample(chip.dataset.type, chip.dataset.sampleId));
   });
+  if (reshuffle || firstRender) prefetchSampleBlobs(visible);
+}
+
+function prefetchSampleBlobs(samples) {
+  const run = () => samples.forEach((sample) => loadSampleBlob(sample).catch(() => {}));
+  if ("requestIdleCallback" in window) window.requestIdleCallback(run, { timeout: 1200 });
+  else window.setTimeout(run, 350);
 }
 
 async function selectSample(type, sampleId) {
@@ -2553,15 +2591,23 @@ async function selectSample(type, sampleId) {
   const pool = type === "jd" ? sampleManifest.jd : sampleManifest.resumes;
   const sample = pool.find((item) => item.id === sampleId);
   if (!sample) return;
+  const pendingKey = `${type}:${sampleId}`;
+  if (pendingSampleIds.has(pendingKey)) return;
   if (isSampleSelected(type, sampleId)) {
     const index = type === "jd" ? 0 : selected.resumes.findIndex((file) => file.name === sample.filename);
     openSelectedDocument(type, Math.max(index, 0), sampleId);
     return;
   }
+  if (type === "jd" && pendingSamples("jd").length) return;
+  if (type === "resume" && selected.resumes.length + pendingSamples("resume").length >= 20) {
+    showUploadError("单次最多选择 20 份简历。");
+    return;
+  }
+  pendingSampleIds.add(pendingKey);
+  renderSampleChips(type);
+  renderFiles();
   try {
-    const response = await fetch(sample.path);
-    if (!response.ok) throw new Error(`无法读取样例：${sample.title}`);
-    const blob = await response.blob();
+    const blob = await loadSampleBlob(sample);
     const file = new File(
       [blob],
       sample.filename,
@@ -2573,15 +2619,32 @@ async function selectSample(type, sampleId) {
       selected.jd = file;
       selectedSampleIds.jd = sampleId;
     } else {
-      if (selected.resumes.length >= 20) throw new Error("单次最多选择 20 份简历。");
       selected.resumes.push(file);
       selectedSampleIds.resumes.add(sampleId);
     }
-    renderFiles();
-    renderSampleChips(type);
   } catch (error) {
     showUploadError(error.message);
+  } finally {
+    pendingSampleIds.delete(pendingKey);
+    renderFiles();
+    renderSampleChips(type);
   }
+}
+
+async function loadSampleBlob(sample) {
+  if (!sampleBlobCache.has(sample.path)) {
+    const request = fetch(sample.path)
+      .then((response) => {
+        if (!response.ok) throw new Error(`无法读取样例：${sample.title}`);
+        return response.blob();
+      })
+      .catch((error) => {
+        sampleBlobCache.delete(sample.path);
+        throw error;
+      });
+    sampleBlobCache.set(sample.path, request);
+  }
+  return sampleBlobCache.get(sample.path);
 }
 
 function safeFilename(name) {

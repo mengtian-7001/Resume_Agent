@@ -245,6 +245,15 @@
       white-space:nowrap;
     }
     .sample-chip.active .sample-chip-meta{background:#111;color:#fff}
+    .sample-chip.loading{background:#111;color:#fff;border-color:#111;cursor:progress;pointer-events:none;box-shadow:0 0 0 3px rgba(17,17,17,.08)}
+    .sample-chip.loading .sample-chip-meta{background:#2c2c2e;color:#fff}
+    .sample-chip.loading .sample-chip-meta:before{content:"";width:8px;height:8px;margin-right:5px;border:1.5px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:sample-spin .65s linear infinite}
+    .file-loading{pointer-events:none}
+    .file-loading .filetype{background:#f1f1f3;color:#6e6e73;animation:sample-pulse 1s ease-in-out infinite alternate}
+    .file-loading .file-name span{color:#111}
+    @keyframes sample-spin{to{transform:rotate(360deg)}}
+    @keyframes sample-pulse{to{background:#dedee2;color:#111}}
+    @media(prefers-reduced-motion:reduce){.sample-chip.loading .sample-chip-meta:before,.file-loading .filetype{animation:none}}
     .dash-empty{margin:0;padding:8px 19px 18px;font-size:12px;color:var(--muted);line-height:1.55}
     .dash-pipeline-meta{padding:0 19px 14px;color:#597065;font-size:12px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
     .dash-pipeline-meta span{font-weight:700;color:#111;white-space:nowrap}
@@ -637,10 +646,10 @@
               <div class="jd-text-actions"><span class="jd-text-status" id="jd-text-status">至少输入 20 个字</span><button class="outline" type="button" id="jd-text-cancel">取消</button><button class="primary" type="button" id="jd-text-apply">使用这段文字</button></div>
             </section>
             <div class="sample-picker" data-type="jd"><div class="sample-picker-head"><span>或从样例中选择</span><button type="button" class="text-link sample-shuffle" data-type="jd">换一批</button></div><div class="sample-chips" id="jd-sample-chips"></div></div>
-            <div class="file-list" id="jd-file"><p class="file-empty">尚未选择或输入 JD</p></div>
+            <div class="file-list" id="jd-file" aria-live="polite"><p class="file-empty">尚未选择或输入 JD</p></div>
             <div class="drop"><div class="drop-icon">▥</div><div><h2>上传候选人简历</h2><p>可一次选择多份简历。每份文件会单独解析并基于同一个 JD 打分。</p></div><div class="drop-actions"><button class="outline" onclick="demoAdd('resume')">添加简历</button><div class="hint">PDF、DOC、DOCX · 最多 20 份</div></div></div>
             <div class="sample-picker" data-type="resume"><div class="sample-picker-head"><span>或从样例中选择</span><button type="button" class="text-link sample-shuffle" data-type="resume">换一批</button></div><div class="sample-chips" id="resume-sample-chips"></div></div>
-            <div class="file-list" id="resume-files"><p class="file-empty">尚未选择简历</p></div>
+            <div class="file-list" id="resume-files" aria-live="polite"><p class="file-empty">尚未选择简历</p></div>
             <input id="jd-input" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
             <input id="resume-input" type="file" multiple accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
             <div class="submit-row" id="submit-row">
