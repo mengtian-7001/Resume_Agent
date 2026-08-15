@@ -197,8 +197,24 @@ if (!config?.url || !config?.anonKey || !config?.workspaceId) {
 function setRuntimeMode(mode, label) {
   const node = document.getElementById("runtime-mode");
   if (!node) return;
+  const compactLabels = {
+    demo: "静态示例",
+    live: "真实数据",
+    "live-dev": "匿名体验",
+    "live-mock": "Mock Agent",
+    "live-openai": "OpenAI Agent",
+  };
   node.dataset.mode = mode;
-  node.textContent = label;
+  node.title = label;
+  node.setAttribute("aria-label", label);
+  const full = document.createElement("span");
+  full.className = "runtime-mode-full";
+  full.textContent = label;
+  const compact = document.createElement("span");
+  compact.className = "runtime-mode-compact";
+  compact.setAttribute("aria-hidden", "true");
+  compact.textContent = compactLabels[mode] || label;
+  node.replaceChildren(full, compact);
 }
 
 function wireJdTextInput() {

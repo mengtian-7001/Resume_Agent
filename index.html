@@ -166,6 +166,7 @@
       font-size:11px;font-weight:700;letter-spacing:.2px;padding:6px 10px;border-radius:999px;
       background:#f5f5f7;color:#6e6e73;white-space:nowrap;
     }
+    .runtime-mode-compact{display:none}
     .runtime-mode[data-mode=live]{background:#111;color:#fff}
     .runtime-mode[data-mode=demo]{background:#fff3e0;color:#b45309}
     .runtime-mode[data-mode=live-dev]{background:#e8f5e9;color:#1b5e20}
@@ -509,6 +510,65 @@
         padding:9px 0;background:linear-gradient(180deg,rgba(255,255,255,0),#fff 22%);
       }
       #upload .submit-row .primary,#upload .submit-row .outline{width:100%;min-height:44px;box-shadow:0 8px 22px rgba(0,0,0,.18)}
+      /* Compact the phone hierarchy: context first, details on demand. */
+      .topbar{gap:10px}
+      .breadcrumb{min-width:0;flex:1;font-size:0}
+      .breadcrumb b{
+        display:block;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+        font-size:13px;line-height:1.2;
+      }
+      .topbar-right{min-width:0;gap:8px}
+      .runtime-mode{
+        max-width:min(39vw,142px);overflow:hidden;text-overflow:ellipsis;
+        padding:6px 9px;font-size:10px;line-height:1;white-space:nowrap;
+      }
+      .runtime-mode-full{display:none}
+      .runtime-mode-compact{display:inline;font-weight:750;letter-spacing:0}
+      .avatar{width:32px;height:32px;font-size:12px}
+      #upload>.intro{gap:8px;margin-bottom:18px}
+      #upload>.intro h1{font-size:26px;line-height:1.16;letter-spacing:-1px}
+      #upload>.intro p{font-size:12px;line-height:1.55}
+      #upload .upload-main,#upload .sample-picker,#upload .sample-chips,#upload .drop,#upload .file-list{
+        min-width:0;max-width:100%;
+      }
+      #upload .drop{grid-template-columns:40px minmax(0,1fr)}
+      #upload .drop>div:nth-child(2){min-width:0}
+      #upload .drop p{overflow-wrap:anywhere}
+      #upload .sample-chips{
+        flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px 5px;
+        scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+      }
+      #upload .sample-chips::-webkit-scrollbar{display:none}
+      #upload .sample-chip{flex:0 0 auto;max-width:78vw;scroll-snap-align:start}
+      #upload.upload-busy{padding-bottom:88px}
+      #upload.upload-busy>.intro{display:none}
+      #upload.upload-busy .upload-layout{gap:0}
+      #upload.upload-busy .submitted-panel{margin-top:0}
+      #upload.upload-busy .submitted-hero{padding:4px 0 12px;border-top:0}
+      #upload.upload-busy .submitted-head{gap:8px;margin-bottom:14px}
+      #upload.upload-busy .submitted-head h3{font-size:18px;line-height:1.3;letter-spacing:-.35px}
+      #upload.upload-busy .submitted-desc{font-size:12px;line-height:1.5}
+      #upload.upload-busy .submitted-status{padding:5px 10px;font-size:10px}
+      #upload.upload-busy .submitted-list{display:grid;gap:6px;margin-bottom:18px}
+      #upload.upload-busy .submitted-item{
+        width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;
+        gap:8px;padding:9px 11px;border-radius:11px;
+      }
+      #upload.upload-busy .submitted-name{max-width:none;min-width:0}
+      #upload.upload-busy .parse-meter{margin-bottom:18px}
+      #upload.upload-busy .parse-meter-head{margin-bottom:9px;align-items:baseline}
+      #upload.upload-busy .parse-meter-head span{font-size:31px;letter-spacing:-1.2px}
+      #upload.upload-busy .parse-meter-label{margin-top:8px;font-size:12px;line-height:1.45}
+      #upload.upload-busy .agent-chain{margin-bottom:10px}
+      #upload.upload-busy .agent-chain-head{display:grid;grid-template-columns:1fr;gap:3px;margin-bottom:8px}
+      #upload.upload-busy .agent-chain-head span{
+        min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;
+      }
+      #upload.upload-busy .agent-chain-list{max-height:min(210px,32vh);padding:6px 10px;border-radius:12px}
+      #upload.upload-busy .agent-chain-item{padding:8px 0}
+      #upload.upload-busy .agent-chain-item strong{font-size:12px}
+      #upload.upload-busy .agent-chain-item p{font-size:10px;line-height:1.4}
+      #upload.upload-busy .parse-track-summary{padding:8px 0}
     }
   </style>
   <style>
@@ -575,7 +635,7 @@
         <button data-view="results"><span class="nav-ico" aria-hidden="true">▦</span><span class="nav-label">候选人</span></button>
         <button data-view="interview"><span class="nav-ico" aria-hidden="true">☷</span><span class="nav-label">面试</span></button>
         <button data-view="tasks"><span class="nav-ico" aria-hidden="true">◷</span><span class="nav-label">任务</span></button>
-        <button data-view="settings"><span class="nav-ico" aria-hidden="true">⚙</span><span class="nav-label">设置</span></button>
+        <button data-view="settings"><span class="nav-ico" aria-hidden="true">⚙︎</span><span class="nav-label">设置</span></button>
       </nav>
       <div class="side-help"><strong>需要帮助？</strong>了解筛选逻辑、评分依据与数据安全说明。<a href="README.md" target="_blank" rel="noopener">查看使用指南 →</a><button class="onboarding-reopen" id="onboarding-reopen" type="button">重新查看新手引导 →</button></div>
     </aside>
@@ -646,7 +706,7 @@
           </div>
         </section>
         <section class="view" id="upload">
-            <div class="intro"><div><h1>发起一次智能筛选</h1><p>选好 JD 和简历，点「一键解析」。历史任务在侧边「最近任务」或底部/左侧「任务」里查看，不会一进来就占满本页。</p></div></div>
+            <div class="intro"><div><h1>发起一次智能筛选</h1><p>选好 JD 和简历，点击「一键解析」。历史任务可在底部「任务」中查看。</p></div></div>
           <div class="upload-layout"><div class="upload-main">
             <div class="drop"><div class="drop-icon">▤</div><div><h2>添加岗位描述（JD）</h2><p>上传文件或直接粘贴文字，我们将提取职责、必备技能、年限与学历等筛选标准。</p></div><div class="drop-actions"><div class="jd-entry-actions"><button class="outline" type="button" onclick="demoAdd('jd')">选择文件</button><button class="outline" type="button" id="jd-text-toggle" aria-expanded="false" aria-controls="jd-text-panel">直接输入</button></div><div class="hint">PDF、DOC、DOCX，或直接输入文字</div></div></div>
             <section class="jd-text-panel" id="jd-text-panel" hidden aria-labelledby="jd-text-label">

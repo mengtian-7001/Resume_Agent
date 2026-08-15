@@ -79,6 +79,19 @@ test("390px viewport has no document horizontal overflow", async ({ page }) => {
   await expect(page.getByRole("button", { name: "发起新筛选" })).toBeVisible();
   await page.locator('[data-view="upload"]').click();
   await expect(page.locator("#start-screening")).toBeVisible();
+  const uploadWidths = await page.evaluate(() => {
+    const viewport = document.documentElement.clientWidth;
+    const drop = document.querySelector("#upload .drop")?.getBoundingClientRect();
+    return {
+      viewport,
+      document: document.documentElement.scrollWidth,
+      dropRight: drop?.right || 0,
+      dropWidth: drop?.width || 0,
+    };
+  });
+  expect(uploadWidths.document).toBeLessThanOrEqual(uploadWidths.viewport);
+  expect(uploadWidths.dropRight).toBeLessThanOrEqual(uploadWidths.viewport);
+  expect(uploadWidths.dropWidth).toBeLessThan(uploadWidths.viewport);
 });
 
 test("selected sample JD and resume can be opened without losing the selection", async ({ page }) => {
