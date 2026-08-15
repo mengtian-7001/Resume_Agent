@@ -1603,6 +1603,10 @@ function updateParseMeter(stepStates, job) {
     }
   } else if (job?.status === "failed") {
     currentLabel = job.error_message || "解析失败";
+  } else if (!activeStep && !waitingStep) {
+    // The visible five-step pipeline can finish before the Agent checker and
+    // result persistence have completed. Keep the final 96% hold truthful.
+    currentLabel = "正在进行 AI 质检与结果汇总…";
   }
 
   percent = Number(percent);
