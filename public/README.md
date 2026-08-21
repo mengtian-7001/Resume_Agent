@@ -1,8 +1,16 @@
-# 觅才 · 简历筛选工作台
+# 简历中台
 
 前端展示层配合 Supabase 托管数据库、私有文件存储和登录鉴权；Python Worker 负责文档解析与规则匹配。
 
-部署到 GitHub + Vercel 的完整步骤见 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)。部署构建会从环境变量生成浏览器所需的 `supabase-config.js`，该文件和服务端密钥都不会提交到仓库。
+部署构建会从环境变量生成浏览器所需的 `supabase-config.js`，该文件和服务端密钥都不会提交到仓库。
+
+## 开发背景
+
+一线招聘的筛选，很少是「一份简历、一个明确结论」。一个岗位常常在几天内收到几十到上百份 PDF / Word / 扫描件；招聘人员只有很短时间决定要不要推进，用人经理又会追问「为什么是这几个人，依据在哪」。
+
+纯人工阅读时，标准会随疲劳和班次漂移；纯关键词过滤又会漏掉同义表述，同时放行技能词堆砌、项目写不清的简历。进入面试后，面试官还往往要从零准备问题，把时间花在核实「了解、参与、预研」到底有没有做过。
+
+简历中台按这个真实场景来做：把非结构化材料变成可比较、可追溯的优先级，标出硬门槛、原文证据和待验证风险。系统不作自动录用决定，只把初筛从「凭印象翻页」变成「带着证据开会」。
 
 ## 产品定位与最短闭环
 
@@ -12,7 +20,6 @@
 
 - 未配置 Supabase 时，页面可直接进入演示模式：点「查看示例结果」展示预制闭环；「运行真实样例」需要 `./dev.sh`。
 - 配置本地环境后，`./dev.sh` 启动真实上传与 Worker；选择样例后点击「一键解析」走同一流程。
-- 两分钟讲解稿和演示步骤见 [docs/DEMO.md](docs/DEMO.md)；五类可复现评测见 [docs/EVALUATION_CASES.md](docs/EVALUATION_CASES.md)。
 
 ### AI 职责、Prompt 与兜底
 
@@ -56,19 +63,16 @@ flowchart LR
 - **失败闭合**：真实模型不可用、引用无法定位或 Checker 异常时，不伪装成功；推荐结论降为人工复核，确定性规则继续提供可演示结果。
 - **有界修订**：Checker 输出问题类型、严重程度、修正建议和可执行 patch，最多回传 Construction 一次，再保留最终审计记录。
 
-### 痛点与技术解法
+### 痛点如何落到实现
 
-| 招聘痛点 | 技术解法 |
+| 真实痛点 | 系统怎么处理 |
 | --- | --- |
-| PDF/DOC/DOCX 信息分散、字段不统一 | 文档解析后形成 JD 要求、候选人画像、Claim 与 Evidence 结构；扫描 PDF 自动 OCR |
-| 关键词相同不等于真实胜任 | 技能同义归一 + 硬门槛 + 项目/生产证据混合评分 |
-| AI 结论容易夸大或归因错误 | 独立 Checker 校验证据、分数、结论和题目，并回传一次修订 |
-| 面试官难以验证简历模糊表述 | 每位候选人生成至少 10 道结构化面试题和 3–5 个证据追问 |
-| 敏感简历与密钥容易泄露 | Supabase 私有存储、RLS、服务端密钥隔离、环境变量配置 |
-
-### 开发说明
-
-编码与文档整理使用了 AI 辅助；匹配规则、硬门槛和质检策略以仓库内可复现代码与测试为准。核心评分规则、证据边界、Checker 校验维度与最终取舍均以仓库内可复现代码和测试为准，没有把 AI 生成内容直接作为候选人事实。
+| 材料量大、格式不齐 | 解析 PDF / DOC / DOCX，扫描件自动 OCR；形成 JD 要求、候选人画像和原文证据 |
+| 判断标准随人漂移 | 硬门槛冻结后不可改写；混合评分给出可解释分项，轨迹可复盘 |
+| 关键词既误伤又误放 | 技能同义归一后再覆盖；堆砌技能词记为风险，不能单独换成生产级结论 |
+| 表述膨胀，缺少证据 | 能力只能引用原文；独立 Checker 校验证据、分数和结论，最多回修一轮 |
+| 过了初筛，面试仍从零开始 | 按候选人证据和缺口生成结构化问题与追问 |
+| 简历敏感、不能自动录用 | 私有存储与 RLS；输出是优先级和风险，录用仍由人决定 |
 
 浏览器只使用 Supabase `anon` key。`service_role` key 仅供 FastAPI Worker 使用，不能写入 `supabase-config.js` 或提交到仓库。
 
@@ -194,13 +198,13 @@ POST /dev/jobs/process                 # 仅 localhost + AGENT_MODE=mock 的本�
 - `NEO4J_URI` / `NEO4J_USER` / `NEO4J_PASSWORD`：Fact Graph 多跳关系；
 - `TAVILY_API_KEY`：JD Research ReAct 的受控联网检索。
 
-Supabase 继续保存原文件、权限、审计和 Agent 状态；Neo4j 保存 Claim / Evidence / Requirement 关系；`agent_memory_chunks` 预留 pgvector 语义记忆。
+Supabase 保存原文件、权限、审计、Agent 轨迹和分级记忆；Neo4j 只保存可选的 Claim / Requirement 关系。规则分不读记忆。Checker 通过只写入 `model_checked`（`trusted=false`）；招聘人员确认证据才升为 `human_verified`。校准、流程结果和题型不得抬高后续分数。
 
-记忆信任分级：
+信任分级：
 
-- `model_checked`：Checker 结构/质量通过（**不等于事实正确**，`trusted=false`）
-- `source_verified` / `human_verified`：才应进入长期 `trusted=true` 召回
-- `expired` / `revoked`：失效记忆
+- `model_checked`：Checker 结构/质量通过（**不等于事实正确**）
+- `source_verified` / `human_verified`：才进入可信向量召回
+- `expired` / `revoked` / `untrusted`：失效，最近条回退也不会捞回
 
 ## 数据与安全边界
 

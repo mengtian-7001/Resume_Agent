@@ -244,9 +244,9 @@ class MockConstructionAgent:
                 unique_followups.append(item)
         followups = unique_followups[:5]
 
-        # Every candidate still receives a complete interview pack for every
-        # candidate outcome. A reject still receives gap-validation questions;
-        # it must not silently skip the interview follow-up pack.
+        # Every candidate still receives a complete interview pack, including
+        # rejects: gap-validation questions help interviewers check the mismatch
+        # instead of dropping the person with no follow-up.
         question_count = 10
         stems_by_decision = {
             "recommend": [
