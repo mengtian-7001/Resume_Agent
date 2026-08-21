@@ -144,7 +144,7 @@ def root() -> HTMLResponse:
         f"""<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"/>
 <meta http-equiv="refresh" content="0;url={frontend}"/>
-<title>觅才 Worker</title></head>
+<title>简历中台 Worker</title></head>
 <body style="font-family:system-ui;padding:40px;line-height:1.6">
   <h1>这里是解析 Worker（API）</h1>
   <p>页面请打开：<a href="{frontend}">{frontend}</a></p>

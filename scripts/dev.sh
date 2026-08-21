@@ -67,7 +67,7 @@ PIDS+=($!)
 URL="http://127.0.0.1:${FRONTEND_PORT}/index.html"
 echo
 echo "=========================================="
-echo "  觅才本地环境已启动"
+echo "  简历中台本地环境已启动"
 echo "  打开：${URL}"
 echo "  提交后点击「一键解析」，页面会自动完成全部流程"
 echo "  按 Ctrl+C 停止全部服务"

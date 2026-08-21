@@ -42,7 +42,7 @@ def fail(label: str, detail: str = "") -> None:
 
 
 def main() -> int:
-    print("=== 觅才本地冒烟测试 ===\n")
+    print("=== 简历中台本地冒烟测试 ===\n")
     errors = 0
 
     if not CONFIG_PATH.exists():

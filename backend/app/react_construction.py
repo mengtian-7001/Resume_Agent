@@ -457,7 +457,7 @@ class OpenAIConstructionAgent:
                 "reason": "deterministic+judge+questions ready",
             }
         if budget <= 0:
-            return {"enough_evidence": True, "next": "finish", "reason": "budget_exhausted"}
+            return {"enough_evidence": False, "next": "finish", "reason": "budget_exhausted"}
         # Prefer questions once scoring evidence exists — avoid burning last steps on optional tools.
         if has_det and has_judge and "generate_questions" not in done:
             return {
